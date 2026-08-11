@@ -1,0 +1,15 @@
+4. **Mode Multijoueur** : Permettez aux joueurs de se connecter en local ou en ligne pour un duelSnake.
+
+5. **Record Global** : Implémentez un système de classement mondial où les meilleurs scores sont stockés dans une base de données et visible par tous les utilisateurs.
+
+6. **Customisation du Serpent** : Permettez aux joueurs de personnaliser l'apparence de leur serpent (couleurs, formes).
+
+7. **Power-Ups** : Ajoutez des power-ups spéciaux qui peuvent aider le joueur à surpasser un obstacle ou augmenter son score.
+
+8. **Historique des Parties** : Enregistrez et affichez les parties précédentes pour chaque profil, y compris le meilleur score, la durée de jeu, etc.
+
+9. **Thèmes** : Proposez plusieurs thèmes (par exemple, jungle, ville, space) qui changent l'apparence du plateau et des éléments du jeu.
+
+10. **AI Opponent** : Ajoutez une intelligence artificielle pour un adversaire intelligent dans les parties solo ou multijoueur.
+
+En intégrant ces fonctionnalités, vous pouvez transformer votre jeu Snake classique en une expérience plus riche et attrayante, tout en offrant aux joueurs des défis supplémentaires.

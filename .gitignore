@@ -1,0 +1,6 @@
+# Build output (rebuild from source with csc.exe or the .NET SDK)
+*.exe
+*.pdb
+*.dll
+bin/
+obj/

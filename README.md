@@ -1,52 +1,60 @@
-# snake2000
+**Snake2000** — Un remake rétro moderne du classique Snake
 
-A modernized version of the legendary Snake game from the 2000s — built as a single-file
-C# / WinForms app with a monochrome Nokia 3310-style LCD look, progressive levels, bonus/malus
-items, profiles with a persistent scoreboard, and local or online duel multiplayer.
+![Screenshot](assets/screenshot.png)
 
-## Features
+Snake2000 rend hommage aux jeux portables des années 2000 avec une esthétique « LCD »
+type Nokia 3310, des animations pixelisées et des mécaniques modernes : niveaux progressifs,
+bonus/malus, profils avec classement et un mode duel local ou en ligne.
 
-- **Classic feel**: pale-green LCD palette, chunky pixel grid, wall collisions end the game
-  (no wrap-around), retro beeper sound effects.
-- **Sprites & animation**: rounded snake body with a directional head (eyes + tongue flick),
-  an apple-shaped food sprite, pulsing/blinking effects, a screen flash on collision.
-- **Progressive levels**: every few apples eaten, the snake speeds up; every few levels, the
-  board itself grows and the window resizes with it.
-- **Bonus & malus**: a speed fruit occasionally appears for a temporary speed boost, and a
-  trap that shrinks the snake if eaten.
-- **Profiles & scoreboard**: enter a pseudonym, your best score/time is saved locally
-  (`%APPDATA%\Snake2000\profiles.txt`) and ranked against other profiles.
-- **Duel mode**: play head-to-head against another snake, either locally on the same keyboard
-  (arrows vs. WASD) or online over a direct TCP connection (one player hosts, the other joins
-  by IP address).
+Principales caractéristiques
 
-## Controls
+- **Ambiance rétro** : palette vert pâle, grille pixelisée et sons d'époque.
+- **Gameplay évolutif** : la vitesse et la taille du plateau augmentent avec les niveaux.
+- **Objets spéciaux** : fruits de vitesse, pièges et effets visuels qui dynamisent la partie.
+- **Profils & classement** : sauvegarde locale des meilleurs scores par pseudonyme.
+- **Duel** : affrontement local (flèches vs WASD) ou connexion directe TCP pour jouer à deux.
 
-| Action | Key |
-| --- | --- |
-| Move | Arrow keys or WASD |
-| Pause / resume | `P` |
-| Start / retry | `Space` |
-| Scoreboard (solo) | `L` |
-| Change name (solo) | `N` |
-| Duel / multiplayer menu | `M` |
+Contrôles
 
-In local duel, Player 1 uses the arrow keys and Player 2 uses WASD.
+- Déplacer : Flèches ou WASD
+- Pause / reprendre : `P`
+- Démarrer / Rejouer : `Espace`
+- Voir le classement : `L`
+- Changer de nom : `N`
+- Menu duel/multijoueur : `M`
 
-## Building & running
+Compilation et lancement
 
-The game is a single file with no external dependencies beyond .NET's `System.Windows.Forms`
-and `System.Drawing`. Compile it with the .NET Framework compiler that ships with Windows:
+Deux façons simples d'exécuter le jeu :
 
-```
-csc /target:winexe /r:System.Drawing.dll /r:System.Windows.Forms.dll Snake2000.cs
+- Ouvrir la solution `Snake2000.slnx` dans Visual Studio (Windows) et appuyer sur `F5`.
+- Utiliser le CLI .NET depuis la racine du projet :
+
+```powershell
+dotnet build Snake2000.slnx
+dotnet run --project Snake2000App
 ```
 
-Then run the resulting `Snake2000.exe`.
+Remarques : le projet cible `.NET 8.0` avec Windows Forms — exécution possible uniquement
+sur un environnement Windows compatible.
 
-## Online duel
+Mode duel en ligne
 
-Online duel is a direct, serverless connection (no matchmaking server): one player hosts —
-their instance listens on TCP port `7788` and shows their local IP — and the other player
-joins by entering that IP address. For players on different networks, the host needs to
-forward port `7788` on their router/firewall.
+Le duel en ligne utilise une connexion directe (peer-to-peer) via le port TCP `7788`.
+Le joueur hébergeant doit transmettre son adresse IP au partenaire (et éventuellement
+configurer un transfert de port si nécessaire).
+
+Contribution
+
+Contributions bienvenues ! Ouvrez une issue pour proposer une amélioration ou soumettez
+une pull request. Pour une PR :
+
+1. Forkez le dépôt
+2. Créez une branche `feature/ma-fonctionnalite`
+3. Soumettez une PR décrivant vos changements
+
+Licence
+
+Ce projet est distribué sous la licence indiquée dans le fichier `LICENSE`.
+
+Merci d'avoir regardé — amusez-vous bien !

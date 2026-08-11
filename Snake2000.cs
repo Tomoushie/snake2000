@@ -61,6 +61,10 @@ public class SnakeGame : Form
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Snake2000");
     private static readonly string ProfilesPath = Path.Combine(ProfilesDirectory, "profiles.txt");
 
+    private static readonly string GlobalScoresDirectory =
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Snake2000");
+    private static readonly string GlobalScoresPath = Path.Combine(GlobalScoresDirectory, "global_scores.txt");
+
     private enum GameState
     {
         NameEntry, Ready, Playing, Paused, GameOver, Scoreboard,
@@ -79,6 +83,19 @@ public class SnakeGame : Form
         public int GamesPlayed;
 
         public PlayerProfile(string name)
+        {
+            Name = name;
+        }
+    }
+
+    private class GlobalScoreEntry
+    {
+        public string Name;
+        public int Score;
+        public TimeSpan Time;
+        public DateTime SubmittedAt;
+
+        public GlobalScoreEntry(string name)
         {
             Name = name;
         }
@@ -117,6 +134,7 @@ public class SnakeGame : Form
     private readonly List<Point> snake2 = new List<Point>();
     private readonly Random random = new Random();
     private readonly List<PlayerProfile> profiles;
+    private readonly List<GlobalScoreEntry> globalScores;
 
     private GameMode mode = GameMode.Solo;
     private int gridWidth = BaseGridWidth;
@@ -175,6 +193,7 @@ public class SnakeGame : Form
         animationTimer.Start();
 
         profiles = LoadProfiles();
+        globalScores = LoadGlobalScores();
         ResetGame();
         state = GameState.NameEntry;
     }
@@ -553,6 +572,8 @@ public class SnakeGame : Form
         {
             currentProfile.GamesPlayed++;
             SaveProfiles();
+            if (mode == GameMode.Solo)
+                SubmitGlobalScore(currentProfile.Name, score, stopwatch.Elapsed);
         }
 
         if (playerWon)
@@ -800,6 +821,100 @@ public class SnakeGame : Form
             foreach (PlayerProfile p in profiles)
                 lines.Add(p.Name + "|" + p.BestScore + "|" + (int)p.BestTime.TotalSeconds + "|" + p.GamesPlayed);
             File.WriteAllLines(ProfilesPath, lines);
+        }
+        catch (IOException) { }
+        catch (UnauthorizedAccessException) { }
+    }
+
+    private static List<GlobalScoreEntry> LoadGlobalScores()
+    {
+        List<GlobalScoreEntry> result = new List<GlobalScoreEntry>();
+        try
+        {
+            if (File.Exists(GlobalScoresPath))
+            {
+                foreach (string line in File.ReadAllLines(GlobalScoresPath))
+                {
+                    string[] parts = line.Split('|');
+                    if (parts.Length < 4 || parts[0].Length == 0)
+                        continue;
+
+                    int score, timeSeconds;
+                    if (!int.TryParse(parts[1], out score)) continue;
+                    if (!int.TryParse(parts[2], out timeSeconds)) continue;
+
+                    DateTime submittedAt = DateTime.UtcNow;
+                    if (parts.Length >= 4 && !DateTime.TryParse(parts[3], out submittedAt))
+                        submittedAt = DateTime.UtcNow;
+
+                    result.Add(new GlobalScoreEntry(parts[0].ToUpperInvariant())
+                    {
+                        Score = score,
+                        Time = TimeSpan.FromSeconds(timeSeconds),
+                        SubmittedAt = submittedAt
+                    });
+                }
+            }
+        }
+        catch (IOException) { }
+        catch (UnauthorizedAccessException) { }
+
+        return result;
+    }
+
+    private void SubmitGlobalScore(string name, int score, TimeSpan elapsed)
+    {
+        string normalizedName = (name ?? "").Trim().ToUpperInvariant();
+        if (normalizedName.Length == 0 || score <= 0)
+            return;
+
+        GlobalScoreEntry existing = null;
+        foreach (GlobalScoreEntry entry in globalScores)
+        {
+            if (entry.Name == normalizedName)
+            {
+                existing = entry;
+                break;
+            }
+        }
+
+        if (existing == null)
+        {
+            existing = new GlobalScoreEntry(normalizedName);
+            globalScores.Add(existing);
+        }
+
+        bool isBetter = score > existing.Score || (score == existing.Score && elapsed < existing.Time);
+        if (isBetter)
+        {
+            existing.Score = score;
+            existing.Time = elapsed;
+            existing.SubmittedAt = DateTime.UtcNow;
+        }
+
+        globalScores.Sort(delegate (GlobalScoreEntry a, GlobalScoreEntry b)
+        {
+            int scoreCompare = b.Score.CompareTo(a.Score);
+            if (scoreCompare != 0)
+                return scoreCompare;
+            return a.Time.CompareTo(b.Time);
+        });
+
+        while (globalScores.Count > 20)
+            globalScores.RemoveAt(globalScores.Count - 1);
+
+        SaveGlobalScores();
+    }
+
+    private void SaveGlobalScores()
+    {
+        try
+        {
+            Directory.CreateDirectory(GlobalScoresDirectory);
+            List<string> lines = new List<string>();
+            foreach (GlobalScoreEntry entry in globalScores)
+                lines.Add(entry.Name + "|" + entry.Score + "|" + (int)entry.Time.TotalSeconds + "|" + entry.SubmittedAt.ToUniversalTime().ToString("u"));
+            File.WriteAllLines(GlobalScoresPath, lines);
         }
         catch (IOException) { }
         catch (UnauthorizedAccessException) { }
@@ -1741,14 +1856,20 @@ public class SnakeGame : Form
         using (Brush overlayBrush = new SolidBrush(BackgroundColor))
             g.FillRectangle(overlayBrush, field);
 
-        List<PlayerProfile> ranked = new List<PlayerProfile>(profiles);
-        ranked.Sort(delegate (PlayerProfile a, PlayerProfile b) { return b.BestScore.CompareTo(a.BestScore); });
+        List<GlobalScoreEntry> ranked = new List<GlobalScoreEntry>(globalScores);
+        ranked.Sort(delegate (GlobalScoreEntry a, GlobalScoreEntry b)
+        {
+            int scoreCompare = b.Score.CompareTo(a.Score);
+            if (scoreCompare != 0)
+                return scoreCompare;
+            return a.Time.CompareTo(b.Time);
+        });
 
         using (Font titleFont = new Font("Consolas", 14f, FontStyle.Bold))
         using (Font rowFont = new Font("Consolas", 9f, FontStyle.Bold))
         using (Brush textBrush = new SolidBrush(InkColor))
         {
-            string title = "SCOREBOARD";
+            string title = "GLOBAL RECORDS";
             SizeF titleSize = g.MeasureString(title, titleFont);
             g.DrawString(title, titleFont, textBrush, field.Left + (field.Width - titleSize.Width) / 2, field.Top + 8);
 
@@ -1756,10 +1877,10 @@ public class SnakeGame : Form
             int rowCount = Math.Min(ranked.Count, ScoreboardRows);
             for (int i = 0; i < rowCount; i++)
             {
-                PlayerProfile p = ranked[i];
-                string marker = ReferenceEquals(p, currentProfile) ? ">" : " ";
+                GlobalScoreEntry p = ranked[i];
+                string marker = currentProfile != null && p.Name == currentProfile.Name.ToUpperInvariant() ? ">" : " ";
                 string row = string.Format("{0}{1,2}.{2,-10}{3,4}  {4}",
-                    marker, i + 1, Truncate(p.Name, MaxNameLength), p.BestScore, FormatTime(p.BestTime));
+                    marker, i + 1, Truncate(p.Name, MaxNameLength), p.Score, FormatTime(p.Time));
                 g.DrawString(row, rowFont, textBrush, field.Left + 12, y);
                 y += 18;
             }

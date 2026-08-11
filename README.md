@@ -23,7 +23,7 @@ items, profiles with a persistent scoreboard, and local or online duel multiplay
 ## Controls
 
 | Action | Key |
-|---|---|
+| --- | --- |
 | Move | Arrow keys or WASD |
 | Pause / resume | `P` |
 | Start / retry | `Space` |

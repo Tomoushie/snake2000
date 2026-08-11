@@ -4,3 +4,8 @@
 *.dll
 bin/
 obj/
+
+# Editor/tooling-specific local config (never commit secrets like API keys)
+.vscode/
+.continue/
+*.csproj.user

@@ -1,13 +1,14 @@
-5. **Record Global** : Implémentez un système de classement mondial où les meilleurs scores sont stockés dans une base de données et visible par tous les utilisateurs.
-
-6. **Customisation du Serpent** : Permettez aux joueurs de personnaliser l'apparence de leur serpent (couleurs, formes).
-
-7. **Power-Ups** : Ajoutez des power-ups spéciaux qui peuvent aider le joueur à surpasser un obstacle ou augmenter son score.
-
-8. **Historique des Parties** : Enregistrez et affichez les parties précédentes pour chaque profil, y compris le meilleur score, la durée de jeu, etc.
-
-9. **Thèmes** : Proposez plusieurs thèmes (par exemple, jungle, ville, space) qui changent l'apparence du plateau et des éléments du jeu.
-
 10. **AI Opponent** : Ajoutez une intelligence artificielle pour un adversaire intelligent dans les parties solo ou multijoueur.
-
-En intégrant ces fonctionnalités, vous pouvez transformer votre jeu Snake classique en une expérience plus riche et attrayante, tout en offrant aux joueurs des défis supplémentaires.
+11. Ajouter un mode “boss fight”
+12. Optimiser les collisions
+13. Ajouter un mode “génération procédurale”
+14. **Mode Zen / Sans Fin** : Un mode sans mort par les murs (téléportation d'un bord à l'autre) et sans fin de partie, pour jouer sans pression avec juste un score qui s'accumule.
+15. **Succès / Trophées** : Un système d'achievements (survivre 5 minutes, manger 50 pommes, battre le boss sans bouclier, etc.) affiché sur le profil du joueur.
+16. **Défi du jour** : Une graine de génération procédurale identique pour tous les joueurs chaque jour, avec un classement dédié pour comparer les scores sur la même carte.
+17. **Nouveaux Power-Ups** : Aimant à nourriture, fantôme (traverse son propre corps quelques secondes), multiplicateur de points, ralentissement temporaire de l'adversaire en duel.
+18. **Mode Coopératif** : Deux serpents contrôlés par deux joueurs qui doivent survivre et vaincre le boss ensemble, au lieu de s'affronter.
+19. **Variété de Boss** : Plusieurs types de boss avec des comportements différents (poursuite directe, projectiles à esquiver, invocation d'obstacles).
+20. **Éditeur de Niveaux** : Permettre de dessiner et sauvegarder ses propres cartes d'obstacles, réutilisables en mode Procédural ou Boss Fight.
+21. **Système de Combo** : Bonus de score pour les pommes mangées rapidement d'affilée, combo qui se réinitialise si le joueur est trop lent.
+22. **Menu Options** : Réglages de volume/mute, remapping des touches, palette daltonien pour plus d'accessibilité.
+23. **Effets Visuels** : Particules lors de la collecte d'objets, tremblement d'écran quand le boss est touché, traînée lumineuse derrière le serpent.

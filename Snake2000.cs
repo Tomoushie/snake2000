@@ -43,6 +43,13 @@ public class SnakeGame : Form
     private const int TrapShrinkAmount = 3;
     private const int MinSnakeLength = 1;
 
+    // --- Boss fight / procedural generation ---
+    private const int BossInitialHealth = 10;
+    private const int BossMoveIntervalTicks = 8;
+    private const int ProceduralObstacleBaseCount = 8;
+    private const int ProceduralObstaclePerLevel = 2;
+    private const int MaxProceduralObstacles = 45;
+
     // --- Animation / sound ---
     private const int AnimationIntervalMs = 40; // ~25 fps redraw clock, independent of game speed
     private const int DeathFlashTicks = 12;      // how long the collision flash pulses for
@@ -65,15 +72,50 @@ public class SnakeGame : Form
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Snake2000");
     private static readonly string GlobalScoresPath = Path.Combine(GlobalScoresDirectory, "global_scores.txt");
 
+    private static readonly string[] SnakeColorNames = new[] { "CLASSIC", "NEON", "CORAL", "CYAN", "VIOLET" };
+    private static readonly string[] SnakeShapeNames = new[] { "ROUNDED", "BLOCK", "SLIM", "SPIKED" };
+    private static readonly string[] SnakeThemeNames = new[] { "CLASSIC", "JUNGLE", "CITY", "SPACE" };
+
     private enum GameState
     {
-        NameEntry, Ready, Playing, Paused, GameOver, Scoreboard,
-        ModeSelect, OnlineHostWait, OnlineJoinEntry, OnlineConnecting
+        NameEntry, Ready, Playing, Paused, GameOver, Scoreboard, ProfileHistory,
+        ModeSelect, OnlineHostWait, OnlineJoinEntry, OnlineConnecting, CustomizeSnake, Achievements
     }
     private enum Direction { Up, Down, Left, Right }
-    private enum SpecialKind { None, Speed, Trap }
-    private enum GameMode { Solo, DuelLocal, DuelHost, DuelGuest }
+    private enum SnakeColorTheme { Classic, Neon, Coral, Cyan, Violet }
+    private enum SnakeShapeStyle { Rounded, Block, Slim, Spiked }
+    private enum BoardTheme { Classic, Jungle, City, Space }
+    private enum SpecialKind { None, Speed, Shield, Trap }
+    private enum GameMode { Solo, DuelLocal, AIDuel, BossFight, Procedural, Zen, DuelHost, DuelGuest }
     private enum DuelWinner { None, Player1, Player2, Draw }
+
+    private class SnakeAppearance
+    {
+        public SnakeColorTheme ColorTheme;
+        public SnakeShapeStyle ShapeStyle;
+        public BoardTheme Theme;
+
+        public SnakeAppearance()
+        {
+            ColorTheme = SnakeColorTheme.Classic;
+            ShapeStyle = SnakeShapeStyle.Rounded;
+            Theme = BoardTheme.Classic;
+        }
+    }
+
+    private class GameHistoryEntry
+    {
+        public int Score;
+        public TimeSpan Time;
+        public DateTime PlayedAt;
+
+        public GameHistoryEntry(int score, TimeSpan time, DateTime playedAt)
+        {
+            Score = score;
+            Time = time;
+            PlayedAt = playedAt;
+        }
+    }
 
     private class PlayerProfile
     {
@@ -81,12 +123,58 @@ public class SnakeGame : Form
         public int BestScore;
         public TimeSpan BestTime;
         public int GamesPlayed;
+        public SnakeAppearance Appearance;
+        public List<GameHistoryEntry> History;
+
+        // Lifetime stats used to unlock achievements (see AchievementDef/Achievements below).
+        public int TotalApplesEaten;
+        public int MaxLevelReached;
+        public int MaxSnakeLength;
+        public int LongestSurvivalSeconds;
+        public int BossesDefeated;
+        public bool WonBossFightWithoutShield;
+        public HashSet<string> UnlockedAchievements;
 
         public PlayerProfile(string name)
         {
             Name = name;
+            Appearance = new SnakeAppearance();
+            History = new List<GameHistoryEntry>();
+            UnlockedAchievements = new HashSet<string>();
         }
     }
+
+    // A single achievement definition: a stable Id (persisted), display text, and the
+    // condition - evaluated against a profile's lifetime stats - that unlocks it.
+    private class AchievementDef
+    {
+        public readonly string Id;
+        public readonly string Title;
+        public readonly string Description;
+        public readonly Func<PlayerProfile, bool> IsUnlocked;
+
+        public AchievementDef(string id, string title, string description, Func<PlayerProfile, bool> isUnlocked)
+        {
+            Id = id;
+            Title = title;
+            Description = description;
+            IsUnlocked = isUnlocked;
+        }
+    }
+
+    private static readonly AchievementDef[] Achievements = new[]
+    {
+        new AchievementDef("FIRST_BITE", "FIRST BITE", "EAT YOUR FIRST APPLE", p => p.TotalApplesEaten >= 1),
+        new AchievementDef("GLUTTON_50", "GLUTTON", "EAT 50 APPLES TOTAL", p => p.TotalApplesEaten >= 50),
+        new AchievementDef("GLUTTON_200", "GOURMAND", "EAT 200 APPLES TOTAL", p => p.TotalApplesEaten >= 200),
+        new AchievementDef("HIGH_SCORE_25", "HIGH SCORE", "SCORE 25 IN ONE GAME", p => p.BestScore >= 25),
+        new AchievementDef("LEVEL_10", "VETERAN", "REACH LEVEL 10", p => p.MaxLevelReached >= 10),
+        new AchievementDef("SURVIVOR_5MIN", "MARATHONER", "SURVIVE 5 MINUTES", p => p.LongestSurvivalSeconds >= 300),
+        new AchievementDef("BOSS_SLAYER", "BOSS SLAYER", "DEFEAT THE BOSS", p => p.BossesDefeated >= 1),
+        new AchievementDef("BOSS_NO_SHIELD", "NO SAFETY NET", "BEAT THE BOSS WITHOUT A SHIELD", p => p.WonBossFightWithoutShield),
+        new AchievementDef("LONG_BOI", "ANACONDA", "REACH 30 SEGMENTS LONG", p => p.MaxSnakeLength >= 30),
+        new AchievementDef("GAMES_25", "REGULAR", "PLAY 25 GAMES", p => p.GamesPlayed >= 25),
+    };
 
     private class GlobalScoreEntry
     {
@@ -121,7 +209,11 @@ public class SnakeGame : Form
         {
             foreach (Note n in notes)
             {
-                try { Console.Beep(n.Frequency, n.DurationMs); }
+                try
+                {
+                    if (OperatingSystem.IsWindows())
+                        Console.Beep(n.Frequency, n.DurationMs);
+                }
                 catch (Exception) { }
             }
         });
@@ -132,6 +224,15 @@ public class SnakeGame : Form
     private readonly Stopwatch stopwatch = new Stopwatch();
     private readonly List<Point> snake = new List<Point>();
     private readonly List<Point> snake2 = new List<Point>();
+    private readonly List<Point> obstacles = new List<Point>();
+    private readonly HashSet<Point> obstaclePositions = new HashSet<Point>();
+    private readonly HashSet<Point> snakePositions = new HashSet<Point>();
+    private readonly HashSet<Point> snake2Positions = new HashSet<Point>();
+    private Point bossPosition = Point.Empty;
+    private Direction bossDirection = Direction.Left;
+    private int bossHealth;
+    private int bossMoveTicksLeft;
+    private bool bossActive;
     private readonly Random random = new Random();
     private readonly List<PlayerProfile> profiles;
     private readonly List<GlobalScoreEntry> globalScores;
@@ -152,6 +253,7 @@ public class SnakeGame : Form
     private int specialTicksLeft;
     private int foodsSinceSpecial;
     private int speedBoostTicksLeft;
+    private bool shieldActive;
     private GameState state;
     private int score;
     private int level;
@@ -161,14 +263,21 @@ public class SnakeGame : Form
     private bool won;
     private bool isNewBest;
     private string nameInput = "";
-    private PlayerProfile currentProfile;
+    private PlayerProfile? currentProfile;
+    private SnakeAppearance localAppearance = new SnakeAppearance();
     private int deathFlashTicksLeft;
 
+    // Per-game achievement tracking: whether the shield ever saved the player this
+    // game (needed for the "no shield" boss achievement), and the titles of any
+    // achievements unlocked at the end of the current game (shown on the Game Over screen).
+    private bool shieldUsedThisGame;
+    private readonly List<string> newlyUnlockedThisGame = new List<string>();
+
     // Networking (duel host/guest)
-    private TcpListener hostListener;
-    private TcpClient duelClient;
-    private StreamReader netReader;
-    private StreamWriter netWriter;
+    private TcpListener? hostListener;
+    private TcpClient? duelClient;
+    private StreamReader? netReader;
+    private StreamWriter? netWriter;
     private bool netConnected;
     private string joinIpInput = "";
     private string netStatusMessage = "";
@@ -209,7 +318,7 @@ public class SnakeGame : Form
         base.Dispose(disposing);
     }
 
-    private void OnAnimationTick(object sender, EventArgs e)
+    private void OnAnimationTick(object? sender, EventArgs e)
     {
         if (deathFlashTicksLeft > 0)
             deathFlashTicksLeft--;
@@ -227,10 +336,23 @@ public class SnakeGame : Form
         ClientSize = new Size(gridWidth * CellSize, gridHeight * CellSize + TopBarHeight);
 
         snake.Clear();
+        snakePositions.Clear();
+        // Single-snake modes never touch snake2, but it can hold stale data from a
+        // previous duel (e.g. switching from Local Duel to Zen) - clear it so it
+        // doesn't get drawn or block food/special spawns via IsOccupied.
+        snake2.Clear();
+        snake2Positions.Clear();
+        obstacles.Clear();
+        obstaclePositions.Clear();
+
         int startX = gridWidth / 2;
         int startY = gridHeight / 2;
         for (int i = 2; i >= 0; i--)
-            snake.Add(new Point(startX - i, startY));
+        {
+            Point segment = new Point(startX - i, startY);
+            snake.Add(segment);
+            snakePositions.Add(segment);
+        }
 
         direction = Direction.Right;
         pendingDirection = Direction.Right;
@@ -245,8 +367,26 @@ public class SnakeGame : Form
         deathFlashTicksLeft = 0;
         won = false;
         isNewBest = false;
+        bossActive = false;
+        bossHealth = 0;
+        bossMoveTicksLeft = BossMoveIntervalTicks;
         currentInterval = BaseIntervalMs;
+        shieldUsedThisGame = false;
+        newlyUnlockedThisGame.Clear();
         stopwatch.Reset();
+
+        if (mode == GameMode.BossFight || mode == GameMode.Procedural)
+            GenerateProceduralObstacles();
+
+        if (mode == GameMode.BossFight)
+        {
+            bossActive = true;
+            bossHealth = BossInitialHealth;
+            bossMoveTicksLeft = BossMoveIntervalTicks;
+            bossDirection = Direction.Left;
+            bossPosition = FindFreePoint();
+        }
+
         PlaceFood();
     }
 
@@ -292,7 +432,13 @@ public class SnakeGame : Form
     // Occasionally drops a bonus (speed fruit) or malus (trap) next to the normal food.
     private void SpawnSpecial()
     {
-        specialKind = random.Next(100) < SpeedBonusChancePercent ? SpecialKind.Speed : SpecialKind.Trap;
+        int roll = random.Next(100);
+        if (roll < SpeedBonusChancePercent)
+            specialKind = SpecialKind.Speed;
+        else if (roll < SpeedBonusChancePercent + 20)
+            specialKind = SpecialKind.Shield;
+        else
+            specialKind = SpecialKind.Trap;
 
         Point candidate;
         int attempts = 0;
@@ -300,7 +446,7 @@ public class SnakeGame : Form
         {
             candidate = new Point(random.Next(gridWidth), random.Next(gridHeight));
             attempts++;
-        } while ((IsOccupied(candidate) || candidate == food) && attempts < 200);
+        } while ((IsOccupied(candidate) || candidate == food || (bossActive && candidate == bossPosition)) && attempts < 200);
 
         specialPosition = candidate;
         specialTicksLeft = SpecialLifetimeTicks;
@@ -308,7 +454,10 @@ public class SnakeGame : Form
 
     private bool IsOccupied(Point p)
     {
-        return snake.Contains(p) || (mode != GameMode.Solo && snake2.Contains(p));
+        return snake.Contains(p)
+            || (mode != GameMode.Solo && snake2.Contains(p))
+            || obstaclePositions.Contains(p)
+            || (bossActive && bossPosition == p);
     }
 
     // Speed fruit: grants a short burst of extra speed on top of the current level speed.
@@ -316,6 +465,12 @@ public class SnakeGame : Form
     {
         speedBoostTicksLeft = SpeedBoostTicks;
         timer.Interval = SpeedBoostIntervalMs;
+    }
+
+    private void ApplyShield()
+    {
+        shieldActive = true;
+        ShowBanner("SHIELD READY");
     }
 
     // Trap: shrinks the snake instead of letting it grow, down to a minimum length.
@@ -349,6 +504,100 @@ public class SnakeGame : Form
         Invalidate();
     }
 
+    private void StartAIDuelSetup()
+    {
+        mode = GameMode.AIDuel;
+        player2Name = "COMPUTER";
+        state = GameState.Ready;
+        Invalidate();
+    }
+
+    private void StartBossFightSetup()
+    {
+        mode = GameMode.BossFight;
+        player2Name = "BOSS";
+        state = GameState.Ready;
+        Invalidate();
+    }
+
+    private void StartProceduralSetup()
+    {
+        mode = GameMode.Procedural;
+        state = GameState.Ready;
+        Invalidate();
+    }
+
+    private void StartZenSetup()
+    {
+        mode = GameMode.Zen;
+        state = GameState.Ready;
+        Invalidate();
+    }
+
+    private Point FindFreePoint()
+    {
+        Point candidate = new Point(0, 0);
+        int attempts = 0;
+        do
+        {
+            candidate = new Point(random.Next(gridWidth), random.Next(gridHeight));
+            attempts++;
+        } while ((IsOccupied(candidate) || candidate == food) && attempts < 1000);
+
+        return candidate;
+    }
+
+    private void ClearObstacles()
+    {
+        obstacles.Clear();
+        obstaclePositions.Clear();
+    }
+
+    private void GenerateProceduralObstacles()
+    {
+        ClearObstacles();
+        int count = Math.Min(MaxProceduralObstacles, ProceduralObstacleBaseCount + (level - 1) * ProceduralObstaclePerLevel);
+        int attempts = 0;
+
+        while (obstacles.Count < count && attempts < count * 20)
+        {
+            Point candidate = new Point(random.Next(gridWidth), random.Next(gridHeight));
+            if (!IsOccupied(candidate))
+            {
+                obstacles.Add(candidate);
+                obstaclePositions.Add(candidate);
+            }
+            attempts++;
+        }
+    }
+
+    private void UpdateBossMovement()
+    {
+        if (!bossActive)
+            return;
+
+        bossMoveTicksLeft--;
+        if (bossMoveTicksLeft > 0)
+            return;
+
+        bossMoveTicksLeft = BossMoveIntervalTicks;
+        List<Direction> candidates = new List<Direction>();
+        foreach (Direction candidate in new[] { Direction.Up, Direction.Right, Direction.Down, Direction.Left })
+        {
+            Point next = MoveHead(bossPosition, candidate);
+            if (IsOutOfBounds(next) || obstaclePositions.Contains(next) || snakePositions.Contains(next) || next == food || next == specialPosition)
+                continue;
+
+            candidates.Add(candidate);
+        }
+
+        if (candidates.Count == 0)
+            return;
+
+        bossDirection = candidates[random.Next(candidates.Count)];
+        bossPosition = MoveHead(bossPosition, bossDirection);
+    }
+
     private void ResetDuel()
     {
         gridWidth = DuelGridSize;
@@ -357,12 +606,25 @@ public class SnakeGame : Form
 
         snake.Clear();
         snake2.Clear();
+        snakePositions.Clear();
+        snake2Positions.Clear();
+        obstacles.Clear();
+        obstaclePositions.Clear();
+
         int y1 = gridHeight / 3;
         int y2 = gridHeight - gridHeight / 3 - 1;
         for (int i = 2; i >= 0; i--)
-            snake.Add(new Point(3 + i, y1));
+        {
+            Point p1 = new Point(3 + i, y1);
+            snake.Add(p1);
+            snakePositions.Add(p1);
+        }
         for (int i = 2; i >= 0; i--)
-            snake2.Add(new Point(gridWidth - 4 - i, y2));
+        {
+            Point p2 = new Point(gridWidth - 4 - i, y2);
+            snake2.Add(p2);
+            snake2Positions.Add(p2);
+        }
 
         direction = Direction.Right;
         pendingDirection = Direction.Right;
@@ -380,6 +642,9 @@ public class SnakeGame : Form
         speedBoostTicksLeft = 0;
         deathFlashTicksLeft = 0;
         duelWinner = DuelWinner.None;
+        bossActive = false;
+        bossHealth = 0;
+        bossMoveTicksLeft = BossMoveIntervalTicks;
         currentInterval = BaseIntervalMs;
         stopwatch.Reset();
         PlaceFood();
@@ -421,6 +686,14 @@ public class SnakeGame : Form
         return p.X < 0 || p.X >= gridWidth || p.Y < 0 || p.Y >= gridHeight;
     }
 
+    // Zen mode: instead of dying at the edge, the snake re-enters from the opposite side.
+    private Point WrapPoint(Point p)
+    {
+        int x = ((p.X % gridWidth) + gridWidth) % gridWidth;
+        int y = ((p.Y % gridHeight) + gridHeight) % gridHeight;
+        return new Point(x, y);
+    }
+
     private static Direction Opposite(Direction d)
     {
         switch (d)
@@ -441,18 +714,21 @@ public class SnakeGame : Form
         do
         {
             candidate = new Point(random.Next(gridWidth), random.Next(gridHeight));
-        } while (IsOccupied(candidate));
+        } while (IsOccupied(candidate) || candidate == specialPosition);
 
         food = candidate;
     }
 
-    private void OnTimerTick(object sender, EventArgs e)
+    private void OnTimerTick(object? sender, EventArgs e)
     {
-        if (mode != GameMode.Solo)
+        if (mode == GameMode.DuelLocal || mode == GameMode.AIDuel || mode == GameMode.DuelHost || mode == GameMode.DuelGuest)
         {
             OnDuelTimerTick();
             return;
         }
+
+        if (mode == GameMode.BossFight)
+            UpdateBossMovement();
 
         direction = pendingDirection;
         Point head = snake[snake.Count - 1];
@@ -466,29 +742,87 @@ public class SnakeGame : Form
             case Direction.Right: newHead.X++; break;
         }
 
-        // Hitting a wall ends the game outright, no wrap-around - just like the phone original
+        // Hitting a wall ends the game outright, no wrap-around - just like the phone original.
+        // Zen mode is the one exception: the snake re-enters from the opposite edge instead.
         if (newHead.X < 0 || newHead.X >= gridWidth || newHead.Y < 0 || newHead.Y >= gridHeight)
         {
-            FinishGame(false);
-            return;
-        }
-
-        bool willEat = newHead == food;
-        bool willEatSpecial = specialKind != SpecialKind.None && newHead == specialPosition;
-
-        // Ignore the tail cell in the self-collision check, since it moves away
-        // this tick unless the snake is growing.
-        int bodyToCheck = (willEat || willEatSpecial) ? snake.Count : snake.Count - 1;
-        for (int i = 0; i < bodyToCheck; i++)
-        {
-            if (snake[i] == newHead)
+            if (mode == GameMode.Zen)
+            {
+                newHead = WrapPoint(newHead);
+            }
+            else if (shieldActive)
+            {
+                shieldActive = false;
+                specialKind = SpecialKind.None;
+                shieldUsedThisGame = true;
+                ShowBanner("SHIELD BLOCKED");
+                newHead = head;
+            }
+            else
             {
                 FinishGame(false);
                 return;
             }
         }
 
+        bool willEat = newHead == food;
+        bool willEatSpecial = specialKind != SpecialKind.None && newHead == specialPosition;
+        bool hitObstacle = obstaclePositions.Contains(newHead);
+        bool hitBoss = bossActive && newHead == bossPosition;
+        bool growThisTick = hitBoss || willEat || willEatSpecial;
+
+        if (hitBoss)
+        {
+            bossHealth--;
+            ShowBanner("BOSS HIT " + Math.Max(0, bossHealth) + " HP");
+            PlayJingle(new Note(1200, 80), new Note(1500, 80));
+            if (bossHealth <= 0)
+            {
+                FinishGame(true);
+                return;
+            }
+            bossPosition = FindFreePoint();
+        }
+
+        if (hitObstacle)
+        {
+            if (shieldActive)
+            {
+                shieldActive = false;
+                specialKind = SpecialKind.None;
+                shieldUsedThisGame = true;
+                ShowBanner("SHIELD BLOCKED");
+            }
+            else
+            {
+                FinishGame(false);
+                return;
+            }
+        }
+
+        // Ignore the tail cell in the self-collision check, since it moves away
+        // this tick unless the snake is growing.
+        int bodyToCheck = (growThisTick || willEat || willEatSpecial) ? snake.Count : snake.Count - 1;
+        for (int i = 0; i < bodyToCheck; i++)
+        {
+            if (snake[i] == newHead)
+            {
+                if (shieldActive)
+                {
+                    shieldActive = false;
+                    specialKind = SpecialKind.None;
+                    shieldUsedThisGame = true;
+                    ShowBanner("SHIELD BLOCKED");
+                    newHead = head;
+                    break;
+                }
+                FinishGame(false);
+                return;
+            }
+        }
+
         snake.Add(newHead);
+        snakePositions.Add(newHead);
 
         if (willEatSpecial && specialKind == SpecialKind.Trap)
         {
@@ -506,9 +840,17 @@ public class SnakeGame : Form
             PlayJingle(new Note(1800, 55), new Note(2200, 55), new Note(2600, 70));
             CheckLevelUp();
         }
+        else if (willEatSpecial && specialKind == SpecialKind.Shield)
+        {
+            ApplyShield();
+            specialKind = SpecialKind.None;
+            PlayJingle(new Note(1000, 55), new Note(1400, 55));
+        }
         else if (willEat)
         {
             score++;
+            if (currentProfile != null)
+                currentProfile.TotalApplesEaten++;
             PlayJingle(new Note(1000, 40));
             foodsSinceSpecial++;
 
@@ -532,7 +874,11 @@ public class SnakeGame : Form
         }
         else
         {
-            snake.RemoveAt(0);
+            if (!growThisTick)
+            {
+                snakePositions.Remove(snake[0]);
+                snake.RemoveAt(0);
+            }
         }
 
         if (bannerTicksLeft > 0)
@@ -563,7 +909,7 @@ public class SnakeGame : Form
         won = playerWon;
 
         isNewBest = currentProfile != null && score > currentProfile.BestScore;
-        if (isNewBest)
+        if (currentProfile != null && isNewBest)
         {
             currentProfile.BestScore = score;
             currentProfile.BestTime = stopwatch.Elapsed;
@@ -571,6 +917,26 @@ public class SnakeGame : Form
         if (currentProfile != null)
         {
             currentProfile.GamesPlayed++;
+            currentProfile.History.Insert(0, new GameHistoryEntry(score, stopwatch.Elapsed, DateTime.Now));
+            if (currentProfile.History.Count > 6)
+                currentProfile.History.RemoveAt(currentProfile.History.Count - 1);
+
+            // Update lifetime stats and unlock any achievements they now qualify for.
+            if (level > currentProfile.MaxLevelReached)
+                currentProfile.MaxLevelReached = level;
+            if (snake.Count > currentProfile.MaxSnakeLength)
+                currentProfile.MaxSnakeLength = snake.Count;
+            int survivedSeconds = (int)stopwatch.Elapsed.TotalSeconds;
+            if (survivedSeconds > currentProfile.LongestSurvivalSeconds)
+                currentProfile.LongestSurvivalSeconds = survivedSeconds;
+            if (mode == GameMode.BossFight && playerWon)
+            {
+                currentProfile.BossesDefeated++;
+                if (!shieldUsedThisGame)
+                    currentProfile.WonBossFightWithoutShield = true;
+            }
+            CheckAchievements();
+
             SaveProfiles();
             if (mode == GameMode.Solo)
                 SubmitGlobalScore(currentProfile.Name, score, stopwatch.Elapsed);
@@ -589,11 +955,35 @@ public class SnakeGame : Form
         Invalidate();
     }
 
+    // Compares the profile's lifetime stats (just updated by FinishGame) against every
+    // achievement's condition, unlocking and persisting any newly-met ones. The titles
+    // of whatever got unlocked this game are kept in newlyUnlockedThisGame so the
+    // Game Over screen can announce them.
+    private void CheckAchievements()
+    {
+        if (currentProfile == null)
+            return;
+
+        foreach (AchievementDef def in Achievements)
+        {
+            if (!currentProfile.UnlockedAchievements.Contains(def.Id) && def.IsUnlocked(currentProfile))
+            {
+                currentProfile.UnlockedAchievements.Add(def.Id);
+                newlyUnlockedThisGame.Add(def.Title);
+            }
+        }
+
+        if (newlyUnlockedThisGame.Count > 0)
+            PlayJingle(new Note(1500, 60), new Note(1900, 60), new Note(2300, 90));
+    }
+
     // Runs the duel simulation for both snakes at once (local duel and duel host only -
     // the guest never calls this, it just renders whatever the host sends it).
     private void OnDuelTimerTick()
     {
         direction = pendingDirection;
+        if (mode == GameMode.AIDuel)
+            UpdateAIDirection();
         direction2 = pendingDirection2;
 
         Point newHead1 = MoveHead(snake[snake.Count - 1], direction);
@@ -759,7 +1149,7 @@ public class SnakeGame : Form
         if (name.Length == 0)
             return;
 
-        PlayerProfile found = null;
+        PlayerProfile? found = null;
         foreach (PlayerProfile p in profiles)
         {
             if (p.Name == name)
@@ -789,7 +1179,7 @@ public class SnakeGame : Form
                 foreach (string line in File.ReadAllLines(ProfilesPath))
                 {
                     string[] parts = line.Split('|');
-                    if (parts.Length != 4 || parts[0].Length == 0)
+                    if (parts.Length < 4 || parts[0].Length == 0)
                         continue;
 
                     int bestScore, bestTimeSeconds, gamesPlayed;
@@ -797,12 +1187,50 @@ public class SnakeGame : Form
                     if (!int.TryParse(parts[2], out bestTimeSeconds)) continue;
                     if (!int.TryParse(parts[3], out gamesPlayed)) continue;
 
-                    result.Add(new PlayerProfile(parts[0])
+                    PlayerProfile profile = new PlayerProfile(parts[0])
                     {
                         BestScore = bestScore,
                         BestTime = TimeSpan.FromSeconds(bestTimeSeconds),
                         GamesPlayed = gamesPlayed
-                    });
+                    };
+
+                    if (parts.Length >= 7)
+                    {
+                        int colorIndex;
+                        int shapeIndex;
+                        int themeIndex;
+                        if (int.TryParse(parts[4], out colorIndex) && int.TryParse(parts[5], out shapeIndex) && int.TryParse(parts[6], out themeIndex))
+                        {
+                            profile.Appearance.ColorTheme = (SnakeColorTheme)Math.Min(Math.Max(colorIndex, 0), SnakeColorNames.Length - 1);
+                            profile.Appearance.ShapeStyle = (SnakeShapeStyle)Math.Min(Math.Max(shapeIndex, 0), SnakeShapeNames.Length - 1);
+                            profile.Appearance.Theme = (BoardTheme)Math.Min(Math.Max(themeIndex, 0), SnakeThemeNames.Length - 1);
+                        }
+                    }
+
+                    if (parts.Length >= 8 && parts[7].Length > 0)
+                    {
+                        profile.History = DeserializeHistory(parts[7]);
+                    }
+
+                    if (parts.Length >= 13)
+                    {
+                        int totalApples, maxLevel, maxLength, longestSurvival, bossesDefeated, noShieldFlag;
+                        if (int.TryParse(parts[8], out totalApples)) profile.TotalApplesEaten = totalApples;
+                        if (int.TryParse(parts[9], out maxLevel)) profile.MaxLevelReached = maxLevel;
+                        if (int.TryParse(parts[10], out maxLength)) profile.MaxSnakeLength = maxLength;
+                        if (int.TryParse(parts[11], out longestSurvival)) profile.LongestSurvivalSeconds = longestSurvival;
+                        if (int.TryParse(parts[12], out bossesDefeated)) profile.BossesDefeated = bossesDefeated;
+                        if (parts.Length >= 14 && int.TryParse(parts[13], out noShieldFlag)) profile.WonBossFightWithoutShield = noShieldFlag != 0;
+                    }
+
+                    if (parts.Length >= 15 && parts[14].Length > 0)
+                    {
+                        foreach (string id in parts[14].Split(';'))
+                            if (id.Length > 0)
+                                profile.UnlockedAchievements.Add(id);
+                    }
+
+                    result.Add(profile);
                 }
             }
         }
@@ -819,11 +1247,53 @@ public class SnakeGame : Form
             Directory.CreateDirectory(ProfilesDirectory);
             List<string> lines = new List<string>();
             foreach (PlayerProfile p in profiles)
-                lines.Add(p.Name + "|" + p.BestScore + "|" + (int)p.BestTime.TotalSeconds + "|" + p.GamesPlayed);
+                lines.Add(p.Name + "|" + p.BestScore + "|" + (int)p.BestTime.TotalSeconds + "|" + p.GamesPlayed + "|" + (int)p.Appearance.ColorTheme + "|" + (int)p.Appearance.ShapeStyle + "|" + (int)p.Appearance.Theme + "|" + SerializeHistory(p.History)
+                    + "|" + p.TotalApplesEaten + "|" + p.MaxLevelReached + "|" + p.MaxSnakeLength + "|" + p.LongestSurvivalSeconds + "|" + p.BossesDefeated + "|" + (p.WonBossFightWithoutShield ? 1 : 0)
+                    + "|" + string.Join(";", p.UnlockedAchievements));
             File.WriteAllLines(ProfilesPath, lines);
         }
         catch (IOException) { }
         catch (UnauthorizedAccessException) { }
+    }
+
+    private static string SerializeHistory(List<GameHistoryEntry> history)
+    {
+        if (history == null || history.Count == 0)
+            return string.Empty;
+
+        List<string> entries = new List<string>();
+        foreach (GameHistoryEntry item in history)
+            entries.Add(string.Format("{0},{1},{2}", item.Score, (int)item.Time.TotalSeconds, item.PlayedAt.ToFileTimeUtc()));
+
+        return string.Join(";", entries);
+    }
+
+    private static List<GameHistoryEntry> DeserializeHistory(string data)
+    {
+        List<GameHistoryEntry> result = new List<GameHistoryEntry>();
+        if (string.IsNullOrEmpty(data))
+            return result;
+
+        foreach (string entry in data.Split(';'))
+        {
+            string[] parts = entry.Split(',');
+            if (parts.Length != 3)
+                continue;
+
+            int score;
+            int seconds;
+            long fileTime;
+            if (!int.TryParse(parts[0], out score))
+                continue;
+            if (!int.TryParse(parts[1], out seconds))
+                continue;
+            if (!long.TryParse(parts[2], out fileTime))
+                continue;
+
+            result.Add(new GameHistoryEntry(score, TimeSpan.FromSeconds(seconds), DateTime.FromFileTimeUtc(fileTime)));
+        }
+
+        return result;
     }
 
     private static List<GlobalScoreEntry> LoadGlobalScores()
@@ -868,7 +1338,7 @@ public class SnakeGame : Form
         if (normalizedName.Length == 0 || score <= 0)
             return;
 
-        GlobalScoreEntry existing = null;
+        GlobalScoreEntry? existing = null;
         foreach (GlobalScoreEntry entry in globalScores)
         {
             if (entry.Name == normalizedName)
@@ -948,17 +1418,20 @@ public class SnakeGame : Form
             TcpClient client = hostListener.AcceptTcpClient();
             AttachConnection(client);
 
-            netWriter.WriteLine("NAME:" + currentProfile.Name);
-            string line = netReader.ReadLine();
-            string guestName = ParseName(line);
-
-            BeginInvoke(new MethodInvoker(delegate
+            if (currentProfile != null && netWriter != null && netReader != null)
             {
-                player2Name = guestName.Length > 0 ? guestName : "GUEST";
-                netConnected = true;
-                state = GameState.Ready;
-                Invalidate();
-            }));
+                netWriter.WriteLine("NAME:" + currentProfile.Name);
+                string? line = netReader.ReadLine();
+                string guestName = ParseName(line);
+
+                BeginInvoke(new MethodInvoker(delegate
+                {
+                    player2Name = guestName.Length > 0 ? guestName : "GUEST";
+                    netConnected = true;
+                    state = GameState.Ready;
+                    Invalidate();
+                }));
+            }
 
             HostReadLoop();
         }
@@ -976,8 +1449,8 @@ public class SnakeGame : Form
     {
         try
         {
-            string line;
-            while ((line = netReader.ReadLine()) != null)
+            string? line;
+            while (netReader != null && (line = netReader.ReadLine()) != null)
             {
                 string msg = line;
                 BeginInvoke(new MethodInvoker(delegate { HandleHostMessage(msg); }));
@@ -1040,19 +1513,22 @@ public class SnakeGame : Form
             client.Connect(ip, DuelPort);
             AttachConnection(client);
 
-            netWriter.WriteLine("NAME:" + currentProfile.Name);
-            string line = netReader.ReadLine();
-            string hostName = ParseName(line);
-
-            BeginInvoke(new MethodInvoker(delegate
+            if (currentProfile != null && netWriter != null && netReader != null)
             {
-                player2Name = hostName.Length > 0 ? hostName : "HOST";
-                netConnected = true;
-                state = GameState.Ready;
-                Invalidate();
-            }));
+                netWriter.WriteLine("NAME:" + currentProfile.Name);
+                string? line = netReader.ReadLine();
+                string hostName = ParseName(line);
 
-            GuestReadLoop();
+                BeginInvoke(new MethodInvoker(delegate
+                {
+                    player2Name = hostName.Length > 0 ? hostName : "HOST";
+                    netConnected = true;
+                    state = GameState.Ready;
+                    Invalidate();
+                }));
+
+                GuestReadLoop();
+            }
         }
         catch (Exception)
         {
@@ -1070,8 +1546,8 @@ public class SnakeGame : Form
     {
         try
         {
-            string line;
-            while ((line = netReader.ReadLine()) != null)
+            string? line;
+            while (netReader != null && (line = netReader.ReadLine()) != null)
             {
                 string msg = line;
                 BeginInvoke(new MethodInvoker(delegate { HandleGuestMessage(msg); }));
@@ -1157,9 +1633,9 @@ public class SnakeGame : Form
         netWriter = null;
     }
 
-    private static string ParseName(string line)
+    private static string ParseName(string? line)
     {
-        if (line != null && line.StartsWith("NAME:"))
+        if (!string.IsNullOrEmpty(line) && line.StartsWith("NAME:"))
             return Truncate(line.Substring(5).Trim(), MaxNameLength);
         return "";
     }
@@ -1292,6 +1768,15 @@ public class SnakeGame : Form
             case GameState.NameEntry:
                 DrawNameEntry(g);
                 break;
+            case GameState.CustomizeSnake:
+                DrawCustomizeSnake(g);
+                break;
+            case GameState.ProfileHistory:
+                DrawProfileHistory(g);
+                break;
+            case GameState.Achievements:
+                DrawAchievements(g);
+                break;
             case GameState.ModeSelect:
                 DrawModeSelect(g);
                 break;
@@ -1326,17 +1811,44 @@ public class SnakeGame : Form
 
     private void DrawReadyOverlay(Graphics g)
     {
+        if (mode == GameMode.Solo && currentProfile == null)
+            return;
+
         if (mode == GameMode.Solo)
         {
-            DrawOverlay(g, "SNAKE", "PLAYER " + currentProfile.Name,
-                "SPACE: PLAY   L: SCORES   N: NAME   M: DUEL",
-                "LEVELS SPEED UP + GROW THE BOARD",
-                "BONUS: SPEED FRUIT   TRAP: SHRINKS YOU");
+            string bestText = "BEST " + currentProfile!.BestScore.ToString("000") + "   GAMES " + currentProfile!.GamesPlayed;
+            string timeLabel = currentProfile!.BestTime.TotalSeconds > 0 ? "TIME " + FormatTime(currentProfile!.BestTime) : "TIME --:--";
+            string themeLabel = "THEME " + SnakeThemeNames[(int)currentProfile!.Appearance.Theme];
+            DrawOverlay(g, "SNAKE", "PLAYER " + currentProfile!.Name,
+                bestText + "   " + timeLabel,
+                themeLabel,
+                "SPACE: PLAY   L: SCORES   N: NAME   C: STYLE",
+                "H: HISTORY   T: TROPHIES",
+                "LEVELS SPEED UP + GROW THE BOARD");
         }
         else if (mode == GameMode.DuelLocal)
         {
             DrawOverlay(g, "LOCAL DUEL", "P1: ARROW KEYS      P2: WASD",
                 "SPACE: PLAY   M: MENU");
+        }
+        else if (mode == GameMode.AIDuel)
+        {
+            DrawOverlay(g, "AI DUEL", "VS COMPUTER", "SPACE: PLAY   M: MENU");
+        }
+        else if (mode == GameMode.BossFight)
+        {
+            DrawOverlay(g, "BOSS FIGHT", "DEFEAT THE BOSS", "SPACE: PLAY   M: MENU",
+                "AVOID OBSTACLES   COLLECT BOOSTS");
+        }
+        else if (mode == GameMode.Procedural)
+        {
+            DrawOverlay(g, "PROCEDURAL MODE", "OBSTACLES GROW EACH LEVEL", "SPACE: PLAY   M: MENU",
+                "SURVIVE AS LONG AS POSSIBLE");
+        }
+        else if (mode == GameMode.Zen)
+        {
+            DrawOverlay(g, "ZEN MODE", "WALLS WRAP AROUND", "SPACE: PLAY   M: MENU",
+                "ONLY YOUR OWN TAIL CAN STOP YOU");
         }
         else if (mode == GameMode.DuelGuest)
         {
@@ -1353,8 +1865,12 @@ public class SnakeGame : Form
         DrawOverlay(g, "PLAY MODE",
             "1: SOLO",
             "2: LOCAL DUEL (SAME PC)",
-            "3: HOST ONLINE DUEL",
-            "4: JOIN ONLINE DUEL",
+            "3: AI DUEL",
+            "4: BOSS FIGHT",
+            "5: PROCEDURAL MODE",
+            "6: ZEN MODE",
+            "7: HOST ONLINE DUEL",
+            "8: JOIN ONLINE DUEL",
             "ESC: BACK");
     }
 
@@ -1406,13 +1922,13 @@ public class SnakeGame : Form
             g.FillRectangle(barBrush, 0, 0, ClientSize.Width, TopBarHeight);
 
         if (state == GameState.NameEntry || state == GameState.ModeSelect || state == GameState.OnlineHostWait ||
-            state == GameState.OnlineJoinEntry || state == GameState.OnlineConnecting)
+            state == GameState.OnlineJoinEntry || state == GameState.OnlineConnecting || state == GameState.CustomizeSnake)
             return;
 
         using (Font hudFont = new Font("Consolas", 9.5f, FontStyle.Bold))
         using (Brush hudBrush = new SolidBrush(BackgroundColor))
         {
-            if (mode == GameMode.Solo)
+            if (mode == GameMode.Solo || mode == GameMode.BossFight || mode == GameMode.Procedural || mode == GameMode.Zen)
             {
                 string scoreText = "SCORE " + score.ToString("000");
                 string levelText = "LVL " + level;
@@ -1428,6 +1944,20 @@ public class SnakeGame : Form
 
                 SizeF bestSize = g.MeasureString(bestText, hudFont);
                 g.DrawString(bestText, hudFont, hudBrush, ClientSize.Width - bestSize.Width - 6, 8);
+
+                if (mode == GameMode.BossFight && bossActive)
+                {
+                    string bossText = "BOSS " + bossHealth + " HP";
+                    SizeF bossSize = g.MeasureString(bossText, hudFont);
+                    g.DrawString(bossText, hudFont, hudBrush, (ClientSize.Width - bossSize.Width) / 2, 8 + timeSize.Height + 1);
+                }
+
+                if (shieldActive)
+                {
+                    string shieldText = "SHIELD";
+                    SizeF shieldSize = g.MeasureString(shieldText, hudFont);
+                    g.DrawString(shieldText, hudFont, hudBrush, ClientSize.Width - bestSize.Width - shieldSize.Width - 12, 8);
+                }
             }
             else
             {
@@ -1470,10 +2000,10 @@ public class SnakeGame : Form
     private void DrawPlayfield(Graphics g)
     {
         Rectangle field = new Rectangle(0, TopBarHeight, gridWidth * CellSize, gridHeight * CellSize);
-        using (Brush bg = new SolidBrush(BackgroundColor))
+        using (Brush bg = new SolidBrush(GetBoardBackgroundColor(currentProfile != null ? currentProfile.Appearance.Theme : BoardTheme.Classic)))
             g.FillRectangle(bg, field);
 
-        using (Pen gridPen = new Pen(GridLineColor))
+        using (Pen gridPen = new Pen(GetBoardGridLineColor(currentProfile != null ? currentProfile.Appearance.Theme : BoardTheme.Classic)))
         {
             for (int x = 0; x <= gridWidth; x++)
                 g.DrawLine(gridPen, x * CellSize, TopBarHeight, x * CellSize, TopBarHeight + gridHeight * CellSize);
@@ -1485,30 +2015,118 @@ public class SnakeGame : Form
         {
             DrawFood(g, inkBrush);
             DrawSpecialItem(g, inkBrush);
-            DrawSnakeBody(g, inkBrush, snake, direction, true);
+            DrawObstacles(g, inkBrush);
+            if (mode == GameMode.BossFight && bossActive)
+                DrawBoss(g);
+            DrawSnakeBody(g, inkBrush, snake, direction, true, GetSnakeAppearance(true));
             if (mode != GameMode.Solo)
-                DrawSnakeBody(g, inkBrush, snake2, direction2, false);
+                DrawSnakeBody(g, inkBrush, snake2, direction2, false, GetSnakeAppearance(false));
         }
 
         using (Pen borderPen = new Pen(InkColor, 3))
             g.DrawRectangle(borderPen, 1, TopBarHeight + 1, gridWidth * CellSize - 2, gridHeight * CellSize - 2);
     }
 
+    private void DrawProfileHistory(Graphics g)
+    {
+        Rectangle field = new Rectangle(0, TopBarHeight, gridWidth * CellSize, gridHeight * CellSize);
+
+        using (Brush overlayBrush = new SolidBrush(BackgroundColor))
+            g.FillRectangle(overlayBrush, field);
+
+        using (Font titleFont = new Font("Consolas", 14f, FontStyle.Bold))
+        using (Font rowFont = new Font("Consolas", 9f, FontStyle.Bold))
+        using (Brush textBrush = new SolidBrush(InkColor))
+        {
+            string title = "PROFILE HISTORY";
+            SizeF titleSize = g.MeasureString(title, titleFont);
+            g.DrawString(title, titleFont, textBrush, field.Left + (field.Width - titleSize.Width) / 2, field.Top + 12);
+
+            float y = field.Top + 46;
+            if (currentProfile == null || currentProfile.History.Count == 0)
+            {
+                string empty = "NO GAMES PLAYED YET";
+                SizeF emptySize = g.MeasureString(empty, rowFont);
+                g.DrawString(empty, rowFont, textBrush, field.Left + (field.Width - emptySize.Width) / 2, y);
+            }
+            else
+            {
+                foreach (GameHistoryEntry entry in currentProfile.History)
+                {
+                    string line = string.Format("{0:MM/dd HH:mm}  {1,3}  {2}", entry.PlayedAt, entry.Score, FormatTime(entry.Time));
+                    g.DrawString(line, rowFont, textBrush, field.Left + 18, y);
+                    y += 18;
+                }
+            }
+
+            string hint = "SPACE: BACK";
+            SizeF hintSize = g.MeasureString(hint, rowFont);
+            g.DrawString(hint, rowFont, textBrush, field.Left + (field.Width - hintSize.Width) / 2, field.Bottom - 22);
+        }
+    }
+
+    private void DrawAchievements(Graphics g)
+    {
+        Rectangle field = new Rectangle(0, TopBarHeight, gridWidth * CellSize, gridHeight * CellSize);
+
+        using (Brush overlayBrush = new SolidBrush(BackgroundColor))
+            g.FillRectangle(overlayBrush, field);
+
+        using (Font titleFont = new Font("Consolas", 14f, FontStyle.Bold))
+        using (Font rowFont = new Font("Consolas", 8.5f, FontStyle.Bold))
+        using (Brush textBrush = new SolidBrush(InkColor))
+        {
+            string title = "TROPHIES";
+            SizeF titleSize = g.MeasureString(title, titleFont);
+            g.DrawString(title, titleFont, textBrush, field.Left + (field.Width - titleSize.Width) / 2, field.Top + 10);
+
+            int unlockedCount = 0;
+            if (currentProfile != null)
+            {
+                foreach (AchievementDef def in Achievements)
+                    if (currentProfile.UnlockedAchievements.Contains(def.Id))
+                        unlockedCount++;
+            }
+            string progress = unlockedCount + " / " + Achievements.Length;
+            SizeF progressSize = g.MeasureString(progress, rowFont);
+            g.DrawString(progress, rowFont, textBrush, field.Left + (field.Width - progressSize.Width) / 2, field.Top + 32);
+
+            float y = field.Top + 56;
+            foreach (AchievementDef def in Achievements)
+            {
+                bool unlocked = currentProfile != null && currentProfile.UnlockedAchievements.Contains(def.Id);
+                string mark = unlocked ? "[X]" : "[ ]";
+                string line = mark + " " + def.Title + " - " + def.Description;
+                using (Brush rowBrush = new SolidBrush(unlocked ? InkColor : Color.FromArgb(120, InkColor)))
+                    g.DrawString(line, rowFont, rowBrush, field.Left + 14, y);
+                y += 19;
+            }
+
+            string hint = "SPACE: BACK";
+            SizeF hintSize = g.MeasureString(hint, rowFont);
+            g.DrawString(hint, rowFont, textBrush, field.Left + (field.Width - hintSize.Width) / 2, field.Bottom - 20);
+        }
+    }
+
     // Draws a snake as smooth, slightly banded rounded segments, tapered at the tail,
     // with a distinct head that has eyes (and an occasional tongue flick) facing the
     // direction of travel. Player 1 is drawn solid; player 2 is drawn as an outline
     // so two snakes stay easy to tell apart on the monochrome LCD palette.
-    private void DrawSnakeBody(Graphics g, Brush inkBrush, List<Point> body, Direction dir, bool filled)
+    private void DrawSnakeBody(Graphics g, Brush inkBrush, List<Point> body, Direction dir, bool filled, SnakeAppearance appearance)
+    {
+        DrawSnakeBody(g, inkBrush, body, dir, filled, appearance, CellSize, TopBarHeight);
+    }
+
+    private void DrawSnakeBody(Graphics g, Brush inkBrush, List<Point> body, Direction dir, bool filled, SnakeAppearance appearance, int cellSize, int topOffset)
     {
         if (body.Count == 0)
             return;
 
-        Color midColor = Color.FromArgb(
-            (InkColor.R + BackgroundColor.R) / 2,
-            (InkColor.G + BackgroundColor.G) / 2,
-            (InkColor.B + BackgroundColor.B) / 2);
+        Color bodyColor = GetSnakeBodyColor(appearance);
+        Color accentColor = GetSnakeAccentColor(appearance);
 
-        using (Brush bandBrush = new SolidBrush(midColor))
+        using (Brush bodyBrush = new SolidBrush(bodyColor))
+        using (Brush accentBrush = new SolidBrush(accentColor))
         using (Pen outlinePen = new Pen(InkColor, 1.6f))
         {
             for (int i = 0; i < body.Count - 1; i++)
@@ -1516,48 +2134,197 @@ public class SnakeGame : Form
                 Point p = body[i];
                 bool isTail = i == 0;
                 float inset = isTail ? 5f : 2f;
+                if (appearance.ShapeStyle == SnakeShapeStyle.Slim)
+                    inset += 1.5f;
+                else if (appearance.ShapeStyle == SnakeShapeStyle.Block)
+                    inset -= 0.5f;
+
                 RectangleF r = new RectangleF(
-                    p.X * CellSize + inset,
-                    TopBarHeight + p.Y * CellSize + inset,
-                    CellSize - inset * 2,
-                    CellSize - inset * 2);
+                    p.X * cellSize + inset,
+                    topOffset + p.Y * cellSize + inset,
+                    cellSize - inset * 2,
+                    cellSize - inset * 2);
 
                 if (filled)
                 {
-                    Brush segmentBrush = (i % 2 == 0) ? inkBrush : bandBrush;
-                    FillRoundedRect(g, segmentBrush, r, 5f);
+                    Brush segmentBrush = (i % 2 == 0) ? bodyBrush : accentBrush;
+                    DrawSegmentShape(g, segmentBrush, r, appearance.ShapeStyle, 5f, true);
                 }
                 else
                 {
-                    DrawRoundedRect(g, outlinePen, r, 5f);
+                    DrawSegmentShape(g, outlinePen, r, appearance.ShapeStyle, 5f, false);
                 }
             }
         }
 
-        DrawSnakeHead(g, inkBrush, body, dir, filled);
+        DrawSnakeHead(g, inkBrush, body, dir, filled, appearance, cellSize, topOffset);
     }
 
-    private void DrawSnakeHead(Graphics g, Brush inkBrush, List<Point> body, Direction dir, bool filled)
+    private void DrawSnakeHead(Graphics g, Brush inkBrush, List<Point> body, Direction dir, bool filled, SnakeAppearance appearance, int cellSize, int topOffset)
     {
         Point head = body[body.Count - 1];
         RectangleF r = new RectangleF(
-            head.X * CellSize + 1,
-            TopBarHeight + head.Y * CellSize + 1,
-            CellSize - 2,
-            CellSize - 2);
+            head.X * cellSize + 1,
+            topOffset + head.Y * cellSize + 1,
+            cellSize - 2,
+            cellSize - 2);
 
-        if (filled)
+        Color bodyColor = GetSnakeBodyColor(appearance);
+        using (Brush headBrush = new SolidBrush(bodyColor))
         {
-            FillRoundedRect(g, inkBrush, r, 6f);
-        }
-        else
-        {
-            using (Pen headPen = new Pen(InkColor, 1.8f))
-                DrawRoundedRect(g, headPen, r, 6f);
+            if (filled)
+            {
+                DrawSegmentShape(g, headBrush, r, appearance.ShapeStyle, 6f, true);
+            }
+            else
+            {
+                using (Pen headPen = new Pen(InkColor, 1.8f))
+                    DrawSegmentShape(g, headPen, r, appearance.ShapeStyle, 6f, false);
+            }
         }
 
         DrawEyes(g, r, dir, filled);
         DrawTongue(g, r, dir);
+    }
+
+    private void DrawSegmentShape(Graphics g, Brush brush, RectangleF r, SnakeShapeStyle style, float radius, bool filled)
+    {
+        switch (style)
+        {
+            case SnakeShapeStyle.Block:
+                if (filled)
+                    g.FillRectangle(brush, r);
+                else
+                    g.DrawRectangle(new Pen(brush), r.X, r.Y, r.Width, r.Height);
+                break;
+            case SnakeShapeStyle.Slim:
+                RectangleF slimRect = new RectangleF(r.X + 3f, r.Y + 4f, r.Width - 6f, r.Height - 8f);
+                if (filled)
+                    g.FillRectangle(brush, slimRect);
+                else
+                    g.DrawRectangle(new Pen(brush), slimRect.X, slimRect.Y, slimRect.Width, slimRect.Height);
+                break;
+            case SnakeShapeStyle.Spiked:
+                PointF[] points = new[]
+                {
+                    new PointF(r.X + r.Width / 2f, r.Y + 1f),
+                    new PointF(r.Right - 2f, r.Y + r.Height / 2f),
+                    new PointF(r.X + r.Width / 2f, r.Bottom - 1f),
+                    new PointF(r.X + 2f, r.Y + r.Height / 2f)
+                };
+                if (filled)
+                    g.FillPolygon(brush, points);
+                else
+                    g.DrawPolygon(new Pen(brush), points);
+                break;
+            default:
+                if (filled)
+                    FillRoundedRect(g, brush, r, radius);
+                else
+                    DrawRoundedRect(g, new Pen(brush), r, radius);
+                break;
+        }
+    }
+
+    private void DrawSegmentShape(Graphics g, Pen pen, RectangleF r, SnakeShapeStyle style, float radius, bool filled)
+    {
+        if (filled)
+        {
+            DrawSegmentShape(g, (Brush)new SolidBrush(pen.Color), r, style, radius, true);
+            return;
+        }
+
+        switch (style)
+        {
+            case SnakeShapeStyle.Block:
+                g.DrawRectangle(pen, r.X, r.Y, r.Width, r.Height);
+                break;
+            case SnakeShapeStyle.Slim:
+                RectangleF slimRect = new RectangleF(r.X + 3f, r.Y + 4f, r.Width - 6f, r.Height - 8f);
+                g.DrawRectangle(pen, slimRect.X, slimRect.Y, slimRect.Width, slimRect.Height);
+                break;
+            case SnakeShapeStyle.Spiked:
+                PointF[] points = new[]
+                {
+                    new PointF(r.X + r.Width / 2f, r.Y + 1f),
+                    new PointF(r.Right - 2f, r.Y + r.Height / 2f),
+                    new PointF(r.X + r.Width / 2f, r.Bottom - 1f),
+                    new PointF(r.X + 2f, r.Y + r.Height / 2f)
+                };
+                g.DrawPolygon(pen, points);
+                break;
+            default:
+                DrawRoundedRect(g, pen, r, radius);
+                break;
+        }
+    }
+
+    private static Color GetSnakeBodyColor(SnakeAppearance appearance)
+    {
+        switch (appearance.ColorTheme)
+        {
+            case SnakeColorTheme.Neon: return Color.FromArgb(0, 210, 120);
+            case SnakeColorTheme.Coral: return Color.FromArgb(220, 90, 80);
+            case SnakeColorTheme.Cyan: return Color.FromArgb(60, 170, 220);
+            case SnakeColorTheme.Violet: return Color.FromArgb(160, 90, 220);
+            default: return InkColor;
+        }
+    }
+
+    private static Color GetSnakeAccentColor(SnakeAppearance appearance)
+    {
+        switch (appearance.ColorTheme)
+        {
+            case SnakeColorTheme.Neon: return Color.FromArgb(255, 255, 120);
+            case SnakeColorTheme.Coral: return Color.FromArgb(255, 190, 120);
+            case SnakeColorTheme.Cyan: return Color.FromArgb(120, 240, 255);
+            case SnakeColorTheme.Violet: return Color.FromArgb(220, 160, 255);
+            default: return Color.FromArgb(95, 110, 80);
+        }
+    }
+
+    private static Color GetBoardBackgroundColor(BoardTheme theme)
+    {
+        switch (theme)
+        {
+            case BoardTheme.Jungle: return Color.FromArgb(180, 210, 160);
+            case BoardTheme.City: return Color.FromArgb(220, 220, 210);
+            case BoardTheme.Space: return Color.FromArgb(18, 26, 65);
+            default: return BackgroundColor;
+        }
+    }
+
+    private static Color GetBoardGridLineColor(BoardTheme theme)
+    {
+        switch (theme)
+        {
+            case BoardTheme.Jungle: return Color.FromArgb(155, 190, 120);
+            case BoardTheme.City: return Color.FromArgb(190, 190, 180);
+            case BoardTheme.Space: return Color.FromArgb(75, 95, 145);
+            default: return GridLineColor;
+        }
+    }
+
+    private static Color GetThemeAccentColor(BoardTheme theme)
+    {
+        switch (theme)
+        {
+            case BoardTheme.Jungle: return Color.FromArgb(95, 145, 85);
+            case BoardTheme.City: return Color.FromArgb(140, 140, 160);
+            case BoardTheme.Space: return Color.FromArgb(150, 190, 255);
+            default: return Color.FromArgb(110, 130, 95);
+        }
+    }
+
+    private SnakeAppearance GetSnakeAppearance(bool isPlayer1)
+    {
+        if (isPlayer1)
+            return currentProfile != null ? currentProfile.Appearance : localAppearance;
+
+        SnakeAppearance alt = new SnakeAppearance();
+        alt.ColorTheme = SnakeColorTheme.Cyan;
+        alt.ShapeStyle = SnakeShapeStyle.Block;
+        return alt;
     }
 
     private void DrawEyes(Graphics g, RectangleF r, Direction dir, bool filled)
@@ -1739,6 +2506,34 @@ public class SnakeGame : Form
         }
     }
 
+    private void DrawObstacles(Graphics g, Brush inkBrush)
+    {
+        foreach (Point obstacle in obstacles)
+        {
+            RectangleF box = new RectangleF(obstacle.X * CellSize + 4, TopBarHeight + obstacle.Y * CellSize + 4,
+                CellSize - 8, CellSize - 8);
+            g.FillRectangle(inkBrush, box);
+        }
+    }
+
+    private void DrawBoss(Graphics g)
+    {
+        float cx = bossPosition.X * CellSize + CellSize / 2f;
+        float cy = TopBarHeight + bossPosition.Y * CellSize + CellSize / 2f;
+        float radius = CellSize * 0.45f;
+
+        using (Brush bossBrush = new SolidBrush(Color.FromArgb(120, 30, 30)))
+            g.FillEllipse(bossBrush, cx - radius, cy - radius, radius * 2, radius * 2);
+
+        using (Pen bossPen = new Pen(BackgroundColor, 2f))
+            g.DrawEllipse(bossPen, cx - radius, cy - radius, radius * 2, radius * 2);
+
+        float healthWidth = Math.Max(4, radius * 1.5f * bossHealth / BossInitialHealth);
+        RectangleF healthBar = new RectangleF(cx - radius, cy + radius + 2, healthWidth, 4);
+        using (Brush healthBrush = new SolidBrush(Color.FromArgb(220, 60, 60)))
+            g.FillRectangle(healthBrush, healthBar);
+    }
+
     private void DrawNameEntry(Graphics g)
     {
         Rectangle field = new Rectangle(0, TopBarHeight, gridWidth * CellSize, gridHeight * CellSize);
@@ -1766,14 +2561,97 @@ public class SnakeGame : Form
         }
     }
 
+    private void DrawCustomizeSnake(Graphics g)
+    {
+        Rectangle field = new Rectangle(0, TopBarHeight, gridWidth * CellSize, gridHeight * CellSize);
+
+        using (Brush overlayBrush = new SolidBrush(BackgroundColor))
+            g.FillRectangle(overlayBrush, field);
+
+        if (currentProfile == null)
+            return;
+
+        using (Font titleFont = new Font("Consolas", 13f, FontStyle.Bold))
+        using (Font hintFont = new Font("Consolas", 8.5f, FontStyle.Bold))
+        using (Font previewFont = new Font("Consolas", 9f, FontStyle.Bold))
+        using (Brush textBrush = new SolidBrush(InkColor))
+        {
+            g.DrawString("CUSTOMIZE SNAKE", titleFont, textBrush, field.Left + 22, field.Top + 18);
+
+            string colorLine = "COLOR: " + SnakeColorNames[(int)currentProfile.Appearance.ColorTheme];
+            string shapeLine = "SHAPE: " + SnakeShapeNames[(int)currentProfile.Appearance.ShapeStyle];
+            g.DrawString(colorLine, hintFont, textBrush, field.Left + 24, field.Top + 58);
+            g.DrawString(shapeLine, hintFont, textBrush, field.Left + 24, field.Top + 78);
+            string themeLine = "THEME: " + SnakeThemeNames[(int)currentProfile.Appearance.Theme];
+            g.DrawString(themeLine, hintFont, textBrush, field.Left + 24, field.Top + 98);
+
+            g.DrawString("LEFT/RIGHT: COLOR", previewFont, textBrush, field.Left + 24, field.Top + 128);
+            g.DrawString("UP/DOWN: SHAPE", previewFont, textBrush, field.Left + 24, field.Top + 148);
+            g.DrawString("PG UP/DOWN: THEME", previewFont, textBrush, field.Left + 24, field.Top + 168);
+            g.DrawString("ENTER: SAVE + RETURN", previewFont, textBrush, field.Left + 24, field.Top + 188);
+            g.DrawString("ESC: BACK", previewFont, textBrush, field.Left + 24, field.Top + 208);
+
+            Rectangle previewRect = new Rectangle(field.Left + 24, field.Top + 245, 140, 90);
+            using (Brush previewBrush = new SolidBrush(GetSnakeBodyColor(currentProfile.Appearance)))
+            using (Brush accentBrush = new SolidBrush(GetSnakeAccentColor(currentProfile.Appearance)))
+            {
+                DrawSegmentShape(g, previewBrush, new RectangleF(previewRect.Left + 16, previewRect.Top + 14, 20, 20), currentProfile.Appearance.ShapeStyle, 5f, true);
+                DrawSegmentShape(g, accentBrush, new RectangleF(previewRect.Left + 40, previewRect.Top + 14, 20, 20), currentProfile.Appearance.ShapeStyle, 5f, true);
+                DrawSegmentShape(g, previewBrush, new RectangleF(previewRect.Left + 64, previewRect.Top + 14, 20, 20), currentProfile.Appearance.ShapeStyle, 5f, true);
+                DrawSegmentShape(g, accentBrush, new RectangleF(previewRect.Left + 88, previewRect.Top + 14, 20, 20), currentProfile.Appearance.ShapeStyle, 5f, true);
+                DrawSnakeHead(g, accentBrush, new List<Point> { new Point(3, 0) }, Direction.Right, true, currentProfile.Appearance, 24, previewRect.Top + 44);
+                using (Brush themeBrush = new SolidBrush(GetThemeAccentColor(currentProfile.Appearance.Theme)))
+                {
+                    Rectangle themeSample = new Rectangle(previewRect.Left + 16, previewRect.Top + 50, 112, 24);
+                    g.FillRectangle(themeBrush, themeSample);
+                    using (Pen borderPen = new Pen(InkColor, 1))
+                        g.DrawRectangle(borderPen, themeSample);
+                }
+            }
+        }
+    }
+
+    // One display line summarizing whatever achievements were just unlocked this game,
+    // or null if none were. Used by the Game Over overlay.
+    private string? AchievementUnlockLine()
+    {
+        if (newlyUnlockedThisGame.Count == 0)
+            return null;
+        if (newlyUnlockedThisGame.Count == 1)
+            return "UNLOCKED: " + newlyUnlockedThisGame[0];
+        return newlyUnlockedThisGame.Count + " ACHIEVEMENTS UNLOCKED!";
+    }
+
     private void DrawGameOverOverlay(Graphics g)
     {
+        if (mode == GameMode.Solo && currentProfile == null)
+            return;
+
         if (mode == GameMode.Solo)
         {
             string title = won ? "YOU WIN!" : "GAME OVER";
             string resultLine = "SCORE " + score.ToString("000") + "   LVL " + level + "   TIME " + FormatTime(stopwatch.Elapsed);
-            string bestLine = isNewBest ? "NEW BEST SCORE!" : "BEST " + currentProfile.BestScore.ToString("000");
-            DrawOverlay(g, title, resultLine, bestLine, "SPACE: RETRY   L: SCORES   M: MENU");
+            string bestLine = isNewBest ? "NEW BEST SCORE!" : "BEST " + currentProfile!.BestScore.ToString("000");
+            List<string> lines = new List<string> { resultLine, bestLine };
+            string? achLine = AchievementUnlockLine();
+            if (achLine != null)
+                lines.Add(achLine);
+            lines.Add("SPACE: RETRY   L: SCORES   M: MENU");
+            DrawOverlay(g, title, lines.ToArray());
+            return;
+        }
+
+        if (mode == GameMode.Zen)
+        {
+            string resultLine = "SCORE " + score.ToString("000") + "   LVL " + level + "   TIME " + FormatTime(stopwatch.Elapsed);
+            List<string> lines = new List<string> { resultLine };
+            if (currentProfile != null)
+                lines.Add(isNewBest ? "NEW BEST SCORE!" : "BEST " + currentProfile.BestScore.ToString("000"));
+            string? achLine = AchievementUnlockLine();
+            if (achLine != null)
+                lines.Add(achLine);
+            lines.Add("SPACE: RETRY   M: MENU");
+            DrawOverlay(g, "GAME OVER", lines.ToArray());
             return;
         }
 
@@ -1927,13 +2805,15 @@ public class SnakeGame : Form
                 return;
 
             case GameState.ModeSelect:
-                if (e.KeyCode == Keys.D1) { mode = GameMode.Solo; state = GameState.Ready; Invalidate(); }
-                else if (e.KeyCode == Keys.D2) { StartLocalDuelSetup(); }
-                else if (e.KeyCode == Keys.D3) { HostDuel(); }
-                else if (e.KeyCode == Keys.D4) { joinIpInput = ""; netStatusMessage = ""; state = GameState.OnlineJoinEntry; Invalidate(); }
-                else if (e.KeyCode == Keys.Escape) { state = GameState.Ready; Invalidate(); }
-                return;
-
+                if (e.KeyCode == Keys.D1) { mode = GameMode.Solo; state = GameState.Ready; Invalidate(); return; }
+                else if (e.KeyCode == Keys.D2) { StartLocalDuelSetup(); return; }
+                else if (e.KeyCode == Keys.D3) { StartAIDuelSetup(); return; }
+                else if (e.KeyCode == Keys.D4) { StartBossFightSetup(); return; }
+                else if (e.KeyCode == Keys.D5) { StartProceduralSetup(); return; }
+                else if (e.KeyCode == Keys.D6) { StartZenSetup(); return; }
+                else if (e.KeyCode == Keys.D7) { HostDuel(); return; }
+                else if (e.KeyCode == Keys.D8) { joinIpInput = ""; netStatusMessage = ""; state = GameState.OnlineJoinEntry; Invalidate(); return; }
+                break;
             case GameState.OnlineHostWait:
             case GameState.OnlineConnecting:
                 if (e.KeyCode == Keys.Escape)
@@ -1957,8 +2837,8 @@ public class SnakeGame : Form
             case GameState.GameOver:
                 if (e.KeyCode == Keys.Space)
                 {
-                    if (mode == GameMode.Solo)
-                        StartGame();
+                    if (mode == GameMode.Solo || mode == GameMode.BossFight || mode == GameMode.Procedural || mode == GameMode.Zen)
+                        StartGame(); // single-snake modes: reset via StartGame, not the duel-grid StartDuel
                     else if (mode == GameMode.DuelGuest)
                         SendLine("READY"); // host controls the actual restart
                     else
@@ -1975,11 +2855,117 @@ public class SnakeGame : Form
                     state = GameState.NameEntry;
                     Invalidate();
                 }
+                else if (mode == GameMode.Solo && e.KeyCode == Keys.H)
+                {
+                    if (currentProfile != null)
+                    {
+                        state = GameState.ProfileHistory;
+                        Invalidate();
+                    }
+                }
+                else if (mode == GameMode.Solo && e.KeyCode == Keys.T)
+                {
+                    if (currentProfile != null)
+                    {
+                        state = GameState.Achievements;
+                        Invalidate();
+                    }
+                }
+                else if (mode == GameMode.Solo && e.KeyCode == Keys.C)
+                {
+                    if (currentProfile != null)
+                    {
+                        localAppearance = currentProfile.Appearance;
+                        state = GameState.CustomizeSnake;
+                        Invalidate();
+                    }
+                }
                 else if (e.KeyCode == Keys.M)
                 {
                     CloseNetworking();
                     mode = GameMode.Solo;
                     state = GameState.ModeSelect;
+                    Invalidate();
+                }
+                return;
+
+            case GameState.CustomizeSnake:
+                if (e.KeyCode == Keys.Escape)
+                {
+                    state = GameState.Ready;
+                    Invalidate();
+                }
+                else if (e.KeyCode == Keys.Enter)
+                {
+                    if (currentProfile != null)
+                    {
+                        SaveProfiles();
+                        ShowBanner("STYLE SAVED");
+                    }
+                    state = GameState.Ready;
+                    Invalidate();
+                }
+                else if (e.KeyCode == Keys.Left)
+                {
+                    if (currentProfile != null)
+                    {
+                        int next = ((int)currentProfile.Appearance.ColorTheme + SnakeColorNames.Length - 1) % SnakeColorNames.Length;
+                        currentProfile.Appearance.ColorTheme = (SnakeColorTheme)next;
+                        Invalidate();
+                    }
+                }
+                else if (e.KeyCode == Keys.Right)
+                {
+                    if (currentProfile != null)
+                    {
+                        int next = ((int)currentProfile.Appearance.ColorTheme + 1) % SnakeColorNames.Length;
+                        currentProfile.Appearance.ColorTheme = (SnakeColorTheme)next;
+                        Invalidate();
+                    }
+                }
+                else if (e.KeyCode == Keys.Up)
+                {
+                    if (currentProfile != null)
+                    {
+                        int next = ((int)currentProfile.Appearance.ShapeStyle + SnakeShapeNames.Length - 1) % SnakeShapeNames.Length;
+                        currentProfile.Appearance.ShapeStyle = (SnakeShapeStyle)next;
+                        Invalidate();
+                    }
+                }
+                else if (e.KeyCode == Keys.Down)
+                {
+                    if (currentProfile != null)
+                    {
+                        int next = ((int)currentProfile.Appearance.ShapeStyle + 1) % SnakeShapeNames.Length;
+                        currentProfile.Appearance.ShapeStyle = (SnakeShapeStyle)next;
+                        Invalidate();
+                    }
+                }
+                else if (e.KeyCode == Keys.PageUp)
+                {
+                    if (currentProfile != null)
+                    {
+                        int next = ((int)currentProfile.Appearance.Theme + 1) % SnakeThemeNames.Length;
+                        currentProfile.Appearance.Theme = (BoardTheme)next;
+                        Invalidate();
+                    }
+                }
+                else if (e.KeyCode == Keys.PageDown)
+                {
+                    if (currentProfile != null)
+                    {
+                        int next = ((int)currentProfile.Appearance.Theme + SnakeThemeNames.Length - 1) % SnakeThemeNames.Length;
+                        currentProfile.Appearance.Theme = (BoardTheme)next;
+                        Invalidate();
+                    }
+                }
+                return;
+
+            case GameState.ProfileHistory:
+            case GameState.Achievements:
+                if (e.KeyCode == Keys.Space || e.KeyCode == Keys.Escape)
+                {
+                    state = GameState.Ready;
                     Invalidate();
                 }
                 return;
@@ -2094,6 +3080,57 @@ public class SnakeGame : Form
             pendingDirection2 = d;
     }
 
+    private void UpdateAIDirection()
+    {
+        Point head = snake2[snake2.Count - 1];
+        Point goal = specialKind != SpecialKind.None ? specialPosition : food;
+        Direction best = direction2;
+        int bestScore = int.MinValue;
+
+        foreach (Direction candidate in new[] { Direction.Up, Direction.Right, Direction.Down, Direction.Left })
+        {
+            if (candidate == Opposite(direction2))
+                continue;
+
+            Point next = MoveHead(head, candidate);
+            if (IsOutOfBounds(next))
+                continue;
+
+            bool collision = false;
+            int bodyCount = snake2.Count - 1;
+            for (int i = 0; i < bodyCount; i++)
+            {
+                if (snake2[i] == next)
+                {
+                    collision = true;
+                    break;
+                }
+            }
+            if (collision)
+                continue;
+
+            int score = -(Math.Abs(next.X - goal.X) + Math.Abs(next.Y - goal.Y));
+            if (next == goal)
+                score += 100;
+            if (next == food && specialKind != SpecialKind.None)
+                score += 30;
+            if (next == specialPosition && specialKind == SpecialKind.Trap)
+                score -= 80;
+
+            Point head1 = snake[snake.Count - 1];
+            if (next == head1)
+                score -= 50;
+
+            if (score > bestScore)
+            {
+                bestScore = score;
+                best = candidate;
+            }
+        }
+
+        pendingDirection2 = best;
+    }
+
     private void HandleNameEntryKey(KeyEventArgs e)
     {
         if (e.KeyCode == Keys.Enter)
@@ -2159,11 +3196,4 @@ public class SnakeGame : Form
         }
     }
 
-    [STAThread]
-    static void Main()
-    {
-        Application.EnableVisualStyles();
-        Application.SetCompatibleTextRenderingDefault(false);
-        Application.Run(new SnakeGame());
-    }
 }

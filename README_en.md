@@ -1,3 +1,5 @@
+# Snake2000
+
 [![License](https://img.shields.io/github/license/Tomoushie/snake2000)](LICENSE)
 
 **Snake2000** — A retro-modern remake of the classic Snake

@@ -1,6 +1,6 @@
-[![License](https://img.shields.io/github/license/Tomoushie/snake2000)](LICENSE)
-
 # Snake2000
+
+[![License](https://img.shields.io/github/license/Tomoushie/snake2000)](LICENSE)
 
 Ce dépôt contient la documentation du projet en deux langues :
 

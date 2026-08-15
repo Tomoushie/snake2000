@@ -2,58 +2,123 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Drawing;
+using Snake2000.Gameplay;
 
 namespace Snake2000.Core
 {
+    /// <summary>
+    /// Bus d'événements du jeu.
+    ///
+    /// La version précédente stockait les abonnés dans des
+    /// <c>WeakReference&lt;Action&lt;object&gt;&gt;</c> enveloppant un lambda créé
+    /// à la volée. Deux conséquences :
+    ///
+    /// 1. Ce lambda n'était retenu par rien d'autre. Au premier passage du
+    ///    ramasse-miettes l'abonné disparaissait, sans erreur ni trace : les
+    ///    événements cessaient simplement d'arriver, quelques secondes après le
+    ///    lancement.
+    /// 2. <c>Unsubscribe</c> comparait le handler d'origine à l'enveloppe, deux
+    ///    objets différents — la comparaison n'aurait jamais été vraie. Elle ne
+    ///    compilait d'ailleurs pas : <c>WeakReference&lt;T&gt;</c> n'expose pas de
+    ///    propriété <c>Target</c>, seulement <c>TryGetTarget</c>.
+    ///
+    /// Les abonnements sont désormais des références FORTES. Le contrat change
+    /// donc : un abonné qui ne se désabonne pas reste en vie tant que le bus
+    /// existe. C'est le comportement normal d'un bus d'événements, et c'est
+    /// pour cela que <see cref="IEventBus"/> expose <c>Unsubscribe</c> — les
+    /// systèmes à durée de vie limitée doivent l'appeler quand ils s'arrêtent.
+    /// </summary>
     public class EventBus : IEventBus
     {
-        private readonly ConcurrentDictionary<Type, List<WeakReference<Action<object>>>> _subscribers = new();
+        /// <summary>
+        /// Le handler d'origine sert de clé au désabonnement ; l'enveloppe est
+        /// ce qu'on invoque. Garder les deux est ce qui rend
+        /// <c>Unsubscribe</c> possible.
+        /// </summary>
+        private readonly struct Abonnement
+        {
+            public readonly object Origine;
+            public readonly Action<object> Enveloppe;
+
+            public Abonnement(object origine, Action<object> enveloppe)
+            {
+                Origine = origine;
+                Enveloppe = enveloppe;
+            }
+        }
+
+        private readonly ConcurrentDictionary<Type, List<Abonnement>> _abonnes = new();
+
+        /// <summary>
+        /// Appelé quand un abonné lève une exception. Sans ce point de sortie,
+        /// le <c>catch</c> silencieux de la version précédente pouvait masquer
+        /// une panne pendant des semaines. Le bus continue malgré tout : un
+        /// abonné fautif ne doit pas interrompre la boucle de jeu ni priver les
+        /// autres abonnés de l'événement.
+        /// </summary>
+        public Action<Type, Exception> OnHandlerError { get; set; }
 
         public void Subscribe<T>(Action<T> handler) where T : class
         {
-            var list = _subscribers.GetOrAdd(typeof(T), _ => new List<WeakReference<Action<object>>>());
-            lock (list)
+            if (handler == null) throw new ArgumentNullException(nameof(handler));
+
+            var liste = _abonnes.GetOrAdd(typeof(T), _ => new List<Abonnement>());
+            lock (liste)
             {
-                list.Add(new WeakReference<Action<object>>(args => handler((T)args)));
+                liste.Add(new Abonnement(handler, args => handler((T)args)));
             }
         }
 
         public void Unsubscribe<T>(Action<T> handler) where T : class
         {
-            if (_subscribers.TryGetValue(typeof(T), out var list))
+            if (handler == null) return;
+
+            if (_abonnes.TryGetValue(typeof(T), out var liste))
             {
-                lock (list)
+                lock (liste)
                 {
-                    list.RemoveAll(wr => wr.Target == null || wr.Target == (Action<object>)(object)handler);
+                    liste.RemoveAll(a => a.Origine.Equals(handler));
                 }
             }
         }
 
         public void Publish<T>(T @event) where T : class
         {
-            if (_subscribers.TryGetValue(typeof(T), out var list))
+            if (@event == null) return;
+            if (!_abonnes.TryGetValue(typeof(T), out var liste)) return;
+
+            // Copie sous verrou, invocation hors verrou : un abonné qui
+            // s'abonne ou se désabonne en réagissant à l'événement provoquerait
+            // sinon un interblocage ou une modification de collection en cours
+            // d'énumération.
+            Abonnement[] instantane;
+            lock (liste)
             {
-                List<Action<object>> handlersToInvoke = new List<Action<object>>();
-                lock (list)
+                if (liste.Count == 0) return;
+                instantane = liste.ToArray();
+            }
+
+            foreach (var abonnement in instantane)
+            {
+                try
                 {
-                    for (int i = list.Count - 1; i >= 0; i--)
-                    {
-                        if (list[i].TryGetTarget(out var handler))
-                        {
-                            handlersToInvoke.Add(handler);
-                        }
-                        else
-                        {
-                            list.RemoveAt(i); // Nettoyage des références mortes
-                        }
-                    }
+                    abonnement.Enveloppe(@event);
                 }
-                foreach (var handler in handlersToInvoke)
+                catch (Exception e)
                 {
-                    try { handler(@event); }
-                    catch { /* Log error */ }
+                    OnHandlerError?.Invoke(typeof(T), e);
                 }
             }
+        }
+
+        /// <summary>
+        /// Retire tous les abonnements. Utile entre deux parties, pour repartir
+        /// d'un bus propre sans reconstruire les systèmes.
+        /// </summary>
+        public void Clear()
+        {
+            _abonnes.Clear();
         }
     }
 

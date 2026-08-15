@@ -1,0 +1,8 @@
+
+Quelques modifications mineures à apporter au code de IRenderPipelines.cs. (tout en gardant toujours les fonctionnalités déjà implémentées) :
+
+Génère un code complet avec les idées ci-dessous à apporter au code IRenderPipelines.cs (tout en gardant toujours les fonctionnalités déjà implémentées) :
+
+Génère un code complet avec les modifications apportées précédemment au code IRenderPipelines.cs. (tout en gardant toujours les fonctionnalités déjà implémentées) :
+
+Génère-moi une liste gigantesque (entre 100 et 1000) idées, propositions, corrections, améliorations, fonctionnalités, arrangements, modifications pertinente pour le fichier, de préférence qui n'ont pas déjà été implémentées digne d'un studio triple A moderne.

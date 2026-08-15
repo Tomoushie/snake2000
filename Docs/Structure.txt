@@ -1,0 +1,527 @@
+1. /Engine — Le moteur (indépendant du jeu)
+/Engine
+    GameEngine.cs
+    EventBus.cs
+    TimerSystem.cs
+    ServiceLocator.cs
+    SceneManager.cs
+    ResourceManager.cs
+    InputManager.cs
+    PhysicsEngine.cs
+    CollisionSystem.cs
+    RenderingEngine.cs
+    AudioEngine.cs
+    AnimationEngine.cs
+    AIEngine.cs
+    GOAPPlanner.cs
+    BehaviorTree.cs
+    SaveSystem.cs
+    JobSystem.cs
+    Profiler.cs
+    ModManager.cs
+
+2. /Engine/Rendering — Pipeline de rendu
+
+/Engine/Rendering
+    Renderer.cs
+    ParticleRenderer.cs
+    GridRenderer.cs
+    SnakeRenderer.cs
+    BossRenderer.cs
+    ShaderManager.cs
+    PostProcessing.cs
+
+3. /Engine/Networking — Netcode
+
+/Engine/Networking
+    DuelHost.cs
+    DuelGuest.cs
+    NetReader.cs
+    NetWriter.cs
+    NetSyncSystem.cs
+	
+4. /Engine/Editor — Outils
+
+/Engine/Editor
+    LevelEditor.cs
+    LevelSerializer.cs
+    DebugOverlay.cs
+    Console.cs
+
+5. /Engine/Data — Données globales
+
+/Engine/Data
+    Profiles.cs
+    Options.cs
+    Levels.cs
+    DailyScores.cs
+    GlobalScores.cs
+    Localization.cs
+
+6. /Engine/Gameplay — Systèmes génériques AAA
+
+/Engine/Gameplay
+    Buffs/
+        Buff.cs
+        BuffComponent.cs
+        BuffSystem.cs
+        SpeedBuff.cs
+
+    Quests/
+        Quest.cs
+        QuestObjective.cs
+        Reward.cs
+        QuestComponent.cs
+        QuestSystem.cs
+        QuestStartedMessage.cs
+        QuestObjectiveUpdatedMessage.cs
+        QuestCompletedMessage.cs
+        QuestFailedMessage.cs
+
+    Dialogue/
+        DialogueNode.cs
+        DialogueOption.cs
+        DialogueTree.cs
+        DialogueSystem.cs
+        DialogueStartedMessage.cs
+        DialogueDisplayMessage.cs
+        DialogueEventMessage.cs
+        DialogueEndedMessage.cs
+
+    Cutscenes/
+        Cutscene.cs
+        CutsceneAction.cs
+        CutsceneSystem.cs
+        CutsceneStartedMessage.cs
+        CutsceneActionExecutedMessage.cs
+        CutsceneEndedMessage.cs
+
+    Weather/
+        WeatherEffectComponent.cs
+        AdvancedWeatherSystem.cs
+
+    Biomes/
+        BiomeComponent.cs
+        AdvancedBiomeSystem.cs
+
+    Seasons/
+        SeasonalEffectComponent.cs
+        AdvancedSeasonSystem.cs
+
+    MetaProgression/
+        MetaProgressionData.cs
+        SaveSystemExtensions.cs
+
+    Stats/
+        StatsComponent.cs
+        StatsSystem.cs
+
+    Talents/
+        Talent.cs
+        TalentComponent.cs
+        TalentSystem.cs
+        TalentChangedMessage.cs
+
+    Inventory/
+        Item.cs
+        InventoryComponent.cs
+        InventorySystem.cs
+        InventoryChangedMessage.cs
+
+    Progression/
+        ExperienceComponent.cs
+        ProgressionSystem.cs
+        LevelUpMessage.cs
+		
+6.1 /Engine/Jobsystem/
+
+/Engine/Jobsystem/ 
+		JobSystem.cs  
+		DefaultJobSystem.cs
+		ThreadAffinityManager.cs
+		JobScheduler.cs
+		WorkerThread.cs
+
+7. /Game — Le jeu Snake2000
+
+/Game
+    SnakeGame.cs
+    GameConfig.cs
+    GameState.cs
+
+8. /Game/Gameplay — Systèmes Snake spécifiques
+
+/Game/Gameplay
+    SnakeSystem.cs
+    FoodSystem.cs
+    SpecialSystem.cs
+    ComboSystem.cs
+    WeatherSystem.cs
+    TimeWarpSystem.cs
+    ChaosSystem.cs
+    InvasionSystem.cs
+    FusionSystem.cs
+    SplitSystem.cs
+    ModuleSystem.cs
+    TraitSystem.cs
+    PotionSystem.cs
+	
+8.1 /Gameplay/Movement/ - 
+	MovementSystem.cs          <- Le contrôleur principal (ce fichier)
+
+/Gameplay/Movement
+	MovementSystem.cs          <- Le contrôleur principal
+	MovementController.cs      <- Gestion de l'état individuel de l'entité
+
+8.2 /Gameplay/Components/ - 
+
+/Gameplay/Components
+	MovementComponent.cs     <- Composants ECS
+    MovementStateComponent.cs
+    MovementSoundComponent.cs
+    MovementVFXComponent.cs
+    MovementImpactComponent.cs
+    AnimationStateComponent.cs
+    SurfaceTypeComponent.cs
+    etc...
+
+8.3 /Gameplay/Movement/Systems/ - 
+
+/Gameplay/Movement/Systems
+	MovementAnimationBridgeSystem.cs
+    MovementImpactSystem.cs
+    MovementStressSystem.cs
+    StaminaStateMachine.cs
+    SurfaceReactionSystem.cs
+    PredictiveSteeringSystem.cs
+    CoverAwareRoutingSystem.cs
+    FlowFieldGroupNavigationSystem.cs
+    ProceduralFootPlacementSystem.cs
+    MovementAudioMixer.cs
+    etc...
+	
+8.3 /Gameplay/Movement/Tools/
+
+/Gameplay/Movement/Tools
+	MovementProfiler.cs
+    MovementDebugOverlaySystem.cs
+
+9. /Game/Bosses — Boss Snake2000
+
+/Game/Bosses
+    BossBase.cs
+    BossWanderer.cs
+    BossChaser.cs
+    BossShooter.cs
+    BossSummoner.cs
+    BossHydra.cs
+    BossInferno.cs
+    BossGlacier.cs
+
+10. /Game/Modes — Modes de jeu Snake2000
+
+/Game/Modes
+    SoloMode.cs
+    CoopMode.cs
+    BossFightMode.cs
+    ProceduralMode.cs
+    DailyMode.cs
+    BattleRoyaleMode.cs
+    SnakeFusionMode.cs
+    MirrorWorldMode.cs
+    ChaosMode.cs
+    InvasionMode.cs
+    PuzzleMode.cs
+    LabyrinthMode.cs
+    ZombieMode.cs
+    VampireMode.cs
+
+11. /Game/UI — Interface du jeu
+
+/Game/UI
+    HUD.cs
+    MenuMain.cs
+    MenuPause.cs
+    MenuSettings.cs
+    DialogueUI.cs
+    CutsceneUI.cs
+
+12. /Game/Audio — Sons du jeu
+
+/Game/Audio
+    SoundLibrary.cs
+    MusicController.cs
+    SFXController.cs
+
+13. /Game/Entities — Entités du jeu
+
+/Game/Entities
+    SnakeEntity.cs
+    FoodEntity.cs
+    BossEntity.cs
+    ProjectileEntity.cs
+    HazardEntity.cs
+
+
+====================================================================
+
+Règles et Conditions (Version AAA, adaptée à Snake2000)
+
+====================================================================
+
+Sommaire : 
+
+Le moteur Snake2000 est modulaire : chaque fonctionnalité doit être isolée dans un module dédié.
+Aucun fichier ne doit contenir plusieurs responsabilités.
+Les systèmes doivent être faiblement couplés et fortement cohérents.
+Les composants ECS doivent rester purs (données uniquement).
+Les outils (profilers, debug, visualisation) doivent être séparés des systèmes de gameplay.
+/Engine ne doit contenir aucune logique spécifique au jeu Snake2000.
+/Game ne doit contenir aucun système générique du moteur.
+
+Les modules doivent être organisés en :
+
+Components/
+System/
+Tools/
+(optionnel) Data/
+
+Les interactions doivent passer par :
+
+EventBus
+Services
+Messages
+Interfaces
+
+==========================
+
+Contraintes de structure des dossiers:
+
+✔ /Engine
+Contient uniquement :
+
+moteurs (Rendering, Audio, Physics, Animation, AI),
+
+systèmes génériques (JobSystem, Profiler, ResourceManager),
+
+pipelines (Rendering, Networking),
+
+outils (Editor, DebugOverlay).
+
+Aucun fichier Snake2000 ne doit apparaître ici.
+
+✔ /Engine/Gameplay
+Contient les systèmes AAA génériques :
+
+Buffs
+Quests
+Dialogue
+Cutscenes
+Weather
+Biomes
+Seasons
+Stats
+Talents
+Inventory
+Progression
+
+Ces systèmes doivent être indépendants du jeu Snake2000.
+
+✔ /Game
+Contient :
+
+la logique du jeu Snake2000,
+les modes,
+les entités,
+les boss,
+les systèmes Snake spécifiques,
+les modules Snake spécifiques (Movement, Chaos, Fusion, etc.).
+
+✔ /Game/Gameplay/Movement
+C’est un module complet.
+Il doit contenir :
+
+Components/
+System/
+Tools/
+
+Aucun autre dossier ne doit contenir du code de locomotion.
+
+====================================================
+
+1. Principes fondamentaux de l’architecture :
+
+Le moteur Snake2000 est modulaire, chaque module doit être isolé dans un dossier dédié.
+Aucun fichier ne doit devenir un “god‑file” contenant plusieurs responsabilités.
+Les systèmes doivent être faibles en dépendances, forts en cohérence interne.
+Les composants ECS doivent rester purs, sans logique métier.
+Les outils (profilers, debug, visualisation) doivent être séparés des systèmes de gameplay.
+Le dossier /Engine ne doit contenir aucune logique spécifique au jeu Snake2000.
+Le dossier /Game ne doit contenir aucun système générique du moteur.
+
+2. Règles de structure des dossiers :
+ 
+/Engine
+Contient uniquement :
+
+les systèmes génériques,
+les services globaux,
+les moteurs (Rendering, Audio, Physics, AI),
+les outils (Profiler, JobSystem, ModManager),
+les pipelines (Rendering, Networking, Editor).
+Aucun fichier de gameplay Snake2000 ne doit apparaître ici.
+
+/Engine/Gameplay
+Contient les systèmes génériques AAA (Buffs, Quests, Dialogue, Cutscenes, Weather, Biomes, Seasons, Stats, Talents, Inventory, Progression).
+Ces systèmes doivent être indépendants du jeu Snake2000.
+
+/Game
+Contient :
+
+la logique du jeu Snake2000,
+les modes,
+les entités,
+les boss,
+les systèmes Snake spécifiques,
+les modules Snake spécifiques (Movement, Chaos, Fusion, etc.).
+
+/Game/Gameplay/Movement
+C’est un module complet.
+Il doit contenir :
+
+Components/
+System/
+Tools/
+
+Aucun autre dossier ne doit contenir du code de locomotion.
+
+3. Règles de modularité
+Chaque module doit avoir son propre dossier.
+
+Chaque module doit contenir :
+
+Components/
+System/
+Tools/ (si nécessaire)
+
+Aucun module ne doit dépendre directement d’un autre module de gameplay.
+
+Les interactions doivent passer par :
+
+EventBus
+Messages
+Services
+Interfaces
+
+4. Règles de mise à jour (GameEngine.Update)
+Le pipeline doit rester strictement ordonné, sans mélange de logique.
+
+Pipeline global :
+GameEngine.Update();
+Renderer.Draw();
+
+Aucun système ne doit modifier cet ordre sans justification technique.
+
+==============================================
+
+Ordre strict dans GameEngine.Update :
+
+WeatherSystem.Update()
+TimeWarpSystem.Update()
+BossSystem.Update()
+MiniBossSystem.Update()
+ChaosSystem.Update()
+SnakeSystem.Update()
+CollisionSystem.Update()
+ParticleSystem.Update()
+BattleRoyaleSystem.Update()
+
+Ajouts obligatoires pour Movement :
+
+MovementSystem.Update()
+MovementImpactSystem.Update()
+MovementAnimationBridgeSystem.Update()
+MovementProfiler.Update()
+SurfaceReactionSystem.Update()
+MovementSoundSystem.Update()
+
+==============================================
+
+5. Règles “NE PAS TOUCHER”
+Ces règles sont adaptées à ton moteur modulaire :
+
+❌ Interdictions absolues :
+ne pas réécrire les systèmes existants,
+ne pas modifier les algorithmes internes,
+ne pas changer les interactions entre systèmes,
+ne pas toucher aux modes de jeu,
+ne pas modifier les boss,
+ne pas changer les particules,
+ne pas toucher aux collisions,
+ne pas modifier les timers,
+ne pas changer les variables globales,
+ne pas modifier les enums existants,
+ne pas changer les constantes globales.
+
+✔ Autorisé :
+ajouter des modules,
+séparer des systèmes,
+refactoriser la structure des dossiers,
+déplacer du code dans des fichiers dédiés,
+créer des outils de debug,
+créer des profilers,
+créer des bridges (Animation, Audio, Physics),
+créer des systèmes annexes (Movement, Surfaces, Weather, etc.),
+corriger les doublons, incohérences, conflits de nommage.
+
+=======================
+
+6. Problèmes potentiels à surveiller:
+
+🔧 Conflits de nommage
+deux classes Particle,
+
+deux enums SpecialKind,
+
+deux méthodes StartBattleRoyale.
+→ doivent être renommés ou regroupés.
+
+🔧 Variables manquantes
+Certains systèmes utilisent des variables non définies dans :
+
+GameState
+GameConfig
+SnakeEntity
+→ vérifier les dépendances croisées.
+
+🔧 Dépendances circulaires
+À éviter absolument :
+
+Movement ↔ Physics ↔ AI ↔ Gameplay,
+Boss ↔ GameEngine ↔ Rendering.
+
+🔧 Systèmes trop lourds
+Si un système dépasse :
+
+1000 lignes
+
+10 responsabilités
+→ il doit être éclaté en sous‑systèmes.
+
+🔧 Surcharge du pipeline Update
+Ajouter trop de systèmes peut :
+
+augmenter le coût CPU,
+
+créer des micro‑lags.
+→ utiliser LOD, JobSystem, Profiler.
+
+7. Conditions de qualité du moteur
+
+Chaque fichier doit avoir une seule responsabilité.
+Chaque système doit être testable indépendamment.
+Chaque module doit être documenté dans Structure.txt.
+Chaque interaction doit passer par EventBus ou Services.
+Chaque dossier doit rester cohérent avec son rôle.s
+
+

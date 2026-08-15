@@ -1,0 +1,67 @@
+Multithreading :
+
+ThreadPoolManager	
+Gère la création et la réutilisation des threads	
+Queue<Action> + WorkerThread
+JobHandle / JobSystem	
+Permet de lancer des jobs parallèles et d’attendre leur fin	ScheduleJob(Action job)
+ParallelFor	Exécute une boucle sur plusieurs threads	
+ParallelFor(int start, int end, Action<int> body)
+SynchronizationContext	
+Garantit la sécurité des accès ECS	
+Lock(EntityManager)
+Profiling hooks	Mesure le temps d’exécution des jobs	
+SystemProfiler.Begin("AIJob")
+
+Exemple minimal de structure
+namespace Snake2000.Engine
+{
+    public static class Multithreading
+    {
+        private static readonly List<Thread> _workers = new();
+        private static readonly Queue<Action> _jobs = new();
+        private static readonly object _lock = new();
+
+        public static void Schedule(Action job)
+        {
+            lock (_lock)
+                _jobs.Enqueue(job);
+        }
+
+        public static void StartWorkers(int count)
+        {
+            for (int i = 0; i < count; i++)
+            {
+                var thread = new Thread(WorkerLoop);
+                thread.Start();
+                _workers.Add(thread);
+            }
+        }
+
+        private static void WorkerLoop()
+        {
+            while (true)
+            {
+                Action job = null;
+                lock (_lock)
+                {
+                    if (_jobs.Count > 0)
+                        job = _jobs.Dequeue();
+                }
+                job?.Invoke();
+                Thread.Sleep(1);
+            }
+        }
+    }
+}
+
+
+Tu pourras appeler ton système depuis AIEngine.cs :
+Multithreading.Schedule(() => UpdateThreats(entityList));
+
+Tu pourras y ajouter :
+
+un JobHandle pour synchroniser les jobs,
+un profiling intégré,
+une priorisation des tâches (IA, physique, rendu).
+

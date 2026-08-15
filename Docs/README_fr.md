@@ -1,10 +1,10 @@
 # Snake2000
 
-[![License](https://img.shields.io/github/license/Tomoushie/snake2000)](LICENSE)
+[![License](https://img.shields.io/github/license/Tomoushie/snake2000)](../LICENSE)
 
 **Snake2000** — Un remake rétro moderne du classique Snake
 
-![Screenshot](assets/screenshot.png)
+![Screenshot](../assets/screenshot.png)
 
 Snake2000 rend hommage aux jeux portables des années 2000 avec une esthétique « LCD »
 type Nokia 3310, des animations pixelisées et des mécaniques modernes : niveaux progressifs,

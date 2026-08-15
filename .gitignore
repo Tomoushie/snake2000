@@ -5,6 +5,9 @@
 bin/
 obj/
 
+# Raccourcis Windows locaux (pointent vers des chemins de la machine)
+*.lnk
+
 # Editor/tooling-specific local config (never commit secrets like API keys)
 .vscode/
 .continue/

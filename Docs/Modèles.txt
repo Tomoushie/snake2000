@@ -1,0 +1,58 @@
+9468 lignes de code
+
+✔ Qwen3.8‑Max
+→ restructure, nettoie, fusionne, corrige la structure
+→ supprime les doublons
+→ réorganise les classes
+→ remet les enums à leur place
+→ élimine les conflits entre versions
+→ rend le fichier cohérent
+
+✔ Qwen3‑Coder
+→ améliore le code
+→ optimise les fonctions
+→ corrige les erreurs C#
+→ respecte les signatures
+→ ne hallucine pas
+→ ne change pas la logique métier
+→ ne modifie pas les noms de variables
+→ ne réécrit pas les systèmes
+
+-> 
+Demande lui :
+
+« Optimise ce code »
+« Améliore la performance »
+« Simplifie cette fonction »
+« Corrige les erreurs C# »
+« Répare les collisions »
+« Répare les projectiles »
+« Répare les mines »
+« Répare les mini‑boss »
+« Répare les power‑ups »
+« Répare le Game Tick »
+« Répare le Boss Fight »
+« Répare le Daily Challenge »
+« Répare le Editor »
+« Répare le Networking »
+« Répare les menus »
+« Répare la persistence »
+« Répare le rendering »
+
+Des tâches techniques, ciblées, précises.
+
+->
+Ne lui demande jamais :
+
+« restructure tout le fichier »
+« réorganise les classes »
+« fusionne les sections »
+« supprime les doublons structurels »
+« réécris le fichier complet »
+
+Qwen3‑Coder n’est pas fait pour restructurer un fichier de 2600 lignes.
+
+Donc :
+
+Qwen3.8‑Max = architecte  
+Qwen3‑Coder = ingénieur

@@ -4,7 +4,7 @@
 
 Ce dépôt contient la documentation du projet en deux langues :
 
-- Français : [README_fr.md](README_fr.md)
-- English : [README_en.md](README_en.md)
+- Français : [README_fr.md](Docs/README_fr.md)
+- English : [README_en.md](Docs/README_en.md)
 
 Choisissez la version qui vous convient.

@@ -1,0 +1,17 @@
+// /Game/Modes/CoopMode.cs
+using Snake2000.Gameplay;
+using Snake2000.Entities;
+
+namespace Snake2000.Modes
+{
+    public class CoopMode : IGameMode
+    {
+        public string Name => "Co-op";
+        public GameMode Type => GameMode.Coop;
+
+        public void Initialize() { }
+        public void Start() { }
+        public void Update() { }
+        public void End() { }
+    }
+}

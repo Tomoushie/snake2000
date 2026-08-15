@@ -1,0 +1,13 @@
+1. Ouvrez un terminal (PowerShell ou CMD)
+
+2. Naviguez vers le dossier du projet :
+cd "E:\Corpus\Snake2000"
+
+3. Compilez le projet:
+dotnet build Snake2000.slnx
+
+Le .exe sera généré ici :
+Snake2000App\bin\Debug\net8.0-windows\win-x64\Snake2000App.exe
+
+5. Pour le lancer directement :
+dotnet run --project Snake2000App

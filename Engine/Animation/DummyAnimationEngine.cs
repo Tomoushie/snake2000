@@ -2085,6 +2085,47 @@ namespace Engine.Animation
 
         #endregion
 
+        #region Pont d'animation (IAnimationEngine)
+
+        private readonly List<IAnimationBridge> _bridges = new List<IAnimationBridge>();
+
+        public void InitializeBridge(IAnimationBridge bridge)
+        {
+            ThrowIfDisposed();
+
+            if (bridge == null)
+                return;
+
+            lock (_sync)
+            {
+                if (!_bridges.Contains(bridge))
+                    _bridges.Add(bridge);
+            }
+        }
+
+        public void ShutdownBridge(IAnimationBridge bridge)
+        {
+            ThrowIfDisposed();
+
+            if (bridge == null)
+                return;
+
+            lock (_sync)
+            {
+                _bridges.Remove(bridge);
+            }
+        }
+
+        public Vector2 ExtractRootMotionDelta(Snake2000.Engine.Core.Entity entity)
+        {
+            ThrowIfDisposed();
+
+            // Le moteur muet ne produit aucun deplacement racine.
+            return Vector2.Zero;
+        }
+
+        #endregion
+
         #region [CORRECTION] IDisposable
 
         public void Dispose()
@@ -2105,6 +2146,7 @@ namespace Engine.Animation
                 _playbackPool.Clear();
                 _metricsHistory.Clear();
                 _subsystems.Clear();
+                _bridges.Clear();
                 _callLog.Clear();
             }
 

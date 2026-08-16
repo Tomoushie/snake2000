@@ -1615,19 +1615,8 @@ namespace Engine.Animation
 
     #region Supporting Types (Conceptual)
 
-    public interface IAnimationEngine
-    {
-        AnimationEngineState State { get; }
-        bool IsReady { get; }
-        AnimationEngineStub Initialize(AnimationEngineConfig config, EventBus eventBus, Profiler profiler, IJobSystem jobSystem, ResourceManager resourceManager);
-        AnimationEngineStub Update(float deltaTime);
-        AnimationEngineStub Shutdown();
-        AnimationEngineStub Dispose();
-        AnimationEngineStub LoadAnimationClip(string clipName, string path);
-        AnimationEngineStub PlayAnimation(string entityName, string clipName, float blendInTime = 0.1f);
-        AnimationPose GetAnimationPose(string entityName);
-        // ... autres méthodes nécessaires
-    }
+    // IAnimationEngine etait redeclare ici, en concurrence avec Engine/IAnimationEngine.cs.
+    // Le contrat unique vit desormais dans Engine/IAnimationEngine.cs.
 
     public enum StubFaultType
     {

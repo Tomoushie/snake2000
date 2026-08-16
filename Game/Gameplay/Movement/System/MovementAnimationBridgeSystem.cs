@@ -13,6 +13,7 @@ using System.IO; // Pour l'export de fichiers
 using System.Threading; // Pour le verrouillage dans le profiler thread-safe, Interlocked
 using System.Threading.Tasks; // Pour l'export asynchrone, mise à jour physique asynchrone
 using System.Linq; // Pour Parallel.ForEach
+using Engine.Animation; // Pour IAnimationEngine et IAnimationBridge
 
 // - Interfaces pour la cohérence -
 namespace Game.Gameplay.Movement
@@ -2532,7 +2533,7 @@ namespace Game.Gameplay.Movement.Components
         public float ParticleSystemFreezeColorR;
         public float ParticleSystemFreezeColorG;
         public float ParticleSystemFreezeColorB;
-        public float ParticleSystemFreezeColorA,
+        public float ParticleSystemFreezeColorA;
         public float ParticleSystemFreezeStartLifetime;
         public float ParticleSystemFreezeStartSpeed;
         public float ParticleSystemFreezeStartSize;
@@ -2746,7 +2747,7 @@ namespace Movement.Physics
 
 namespace Movement.Animation
 {
-    public class MovementAnimationBridgeSystem : IAnimationSystem
+    public class MovementAnimationBridgeSystem : IAnimationSystem, IAnimationBridge
     {
         private EntityManager _entityManager;
         private PhysicsSystem _physicsSystem; // Pour les interactions physique-animation

@@ -679,6 +679,47 @@ namespace Engine.Animation
 
         #endregion
 
+        #region Pont d'animation (IAnimationEngine)
+
+        private readonly List<IAnimationBridge> _bridges = new List<IAnimationBridge>();
+
+        public void InitializeBridge(IAnimationBridge bridge)
+        {
+            LogCall("InitializeBridge");
+
+            if (bridge == null)
+                return;
+
+            lock (_bridges)
+            {
+                if (!_bridges.Contains(bridge))
+                    _bridges.Add(bridge);
+            }
+        }
+
+        public void ShutdownBridge(IAnimationBridge bridge)
+        {
+            LogCall("ShutdownBridge");
+
+            if (bridge == null)
+                return;
+
+            lock (_bridges)
+            {
+                _bridges.Remove(bridge);
+            }
+        }
+
+        public System.Numerics.Vector2 ExtractRootMotionDelta(Snake2000.Engine.Core.Entity entity)
+        {
+            LogCall($"ExtractRootMotionDelta({entity.Id})");
+
+            // Le stub ne simule pas de deplacement racine.
+            return System.Numerics.Vector2.Zero;
+        }
+
+        #endregion
+
         #region Helpers (Core)
 
         private string GenerateChecksum(string path) => "CHK_" + path.GetHashCode().ToString("X8");
@@ -688,19 +729,8 @@ namespace Engine.Animation
 
     #region Supporting Types (Conceptual - Core)
 
-    public interface IAnimationEngine
-    {
-        AnimationEngineState State { get; }
-        bool IsReady { get; }
-        AnimationEngineStub Initialize(AnimationEngineConfig config, EventBus eventBus, Profiler profiler, IJobSystem jobSystem, ResourceManager resourceManager);
-        AnimationEngineStub Update(float deltaTime);
-        AnimationEngineStub Shutdown();
-        AnimationEngineStub Dispose();
-        AnimationEngineStub LoadAnimationClip(string clipName, string path);
-        AnimationEngineStub PlayAnimation(string entityName, string clipName, float blendInTime = 0.1f);
-        AnimationPose GetAnimationPose(string entityName);
-        // ... autres méthodes nécessaires
-    }
+    // IAnimationEngine etait redeclare ici, en concurrence avec Engine/IAnimationEngine.cs.
+    // Le contrat unique vit desormais dans Engine/IAnimationEngine.cs.
 
     public enum StubFaultType
     {

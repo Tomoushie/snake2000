@@ -2859,4 +2859,5 @@ namespace Engine.Profiling
             _animMetrics.Clear();
         }
     }
+#endregion
 }

@@ -1192,9 +1192,10 @@ namespace Engine.Jobsystem
         // --- Les propriétés GetVersion(), GetJobSystemBuildMetadata() etc. restent inchangées ---
         public string GetVersion() => "1.0.0";
 
-        public BuildMetadata GetJobSystemBuildMetadata()
+        // Qualifie : Engine.Profiling declare aussi un BuildMetadata.
+        public Engine.Core.BuildMetadata GetJobSystemBuildMetadata()
         {
-             return new BuildMetadata { /* ... */ };
+             return new Engine.Core.BuildMetadata { /* ... */ };
         }
 
         // --- Autres getters pour les structures de reporting restent inchangées ---

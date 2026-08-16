@@ -2254,4 +2254,5 @@ namespace Engine.Audio
     internal class DefaultSpatializer : IAudioSpatializer { public string Name => "DefaultSpatializer"; public void Process(float[] samples, int channels, int sampleRate) { /* Placeholder */ } public void SetParameter(string paramName, object value) { } public object GetParameter(string paramName) => null; public void SetListener(Vector3 position, Vector3 forward, Vector3 up, Vector3 velocity) { /* Placeholder */ } public void UpdateSourcePosition(IAudioSource source, Vector3 position, Vector3 velocity) { /* Placeholder */ } }
     internal class HRTFSpatializer : IAudioSpatializer { public string Name => "HRTFSpatializer"; public void Process(float[] samples, int channels, int sampleRate) { /* Placeholder */ } public void SetParameter(string paramName, object value) { } public object GetParameter(string paramName) => null; public void SetListener(Vector3 position, Vector3 forward, Vector3 up, Vector3 velocity) { /* Placeholder */ } public void UpdateSourcePosition(IAudioSource source, Vector3 position, Vector3 velocity) { /* Placeholder */ } }
     #endregion
+#endregion
 }

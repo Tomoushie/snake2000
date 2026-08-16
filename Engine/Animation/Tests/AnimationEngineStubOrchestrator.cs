@@ -205,8 +205,8 @@ namespace Engine.Animation.Test
     #endregion
 
     #region Interfaces (réutilisés ou nouveaux)
-    // Réutilisation de IStubPlugin
-    using Engine.Animation;
+    // Réutilisation de IStubPlugin -- Engine.Animation est deja importe en tete
+    // de l'espace de noms ; une clause using ne peut pas suivre des declarations.
 
     // [AJOUT] Interface pour les extensions
     public interface IOrchestratorExtension

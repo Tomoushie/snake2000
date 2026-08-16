@@ -339,7 +339,7 @@ namespace Engine.Animation
         public readonly string Description;
         public readonly DateTime Timestamp;
         public readonly Dictionary<string, object> Parameters;
-        public ChaosEvent(string type, string desc, DateTime time, Dictionary<string, object> params) => (Type, Description, Timestamp, Parameters) = (type, desc, time, params);
+        public ChaosEvent(string type, string desc, DateTime time, Dictionary<string, object> parameters) => (Type, Description, Timestamp, Parameters) = (type, desc, time, parameters);
     }
 
     #endregion

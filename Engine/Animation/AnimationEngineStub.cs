@@ -923,21 +923,18 @@ namespace Engine.Animation
 
         #region IAnimationEngine Explicit Implementation (Placeholder) (Core)
 
-        // Implémentation des membres de IAnimationEngine
-        // Ces méthodes sont des wrappers vers les méthodes internes du stub.
-        AnimationEngineState IAnimationEngine.State => this.State;
-        bool IAnimationEngine.IsReady => this.IsReady;
-        AnimationEngineStub IAnimationEngine.Initialize(AnimationEngineConfig config, EventBus eventBus, Profiler profiler, IJobSystem jobSystem, ResourceManager resourceManager)
-        {
-            return this.Initialize(config, eventBus, profiler, jobSystem, resourceManager);
-        }
-        AnimationEngineStub IAnimationEngine.Update(float deltaTime) => this.Update(deltaTime);
-        AnimationEngineStub IAnimationEngine.Shutdown() => this.Shutdown();
-        AnimationEngineStub IAnimationEngine.Dispose() => this.Dispose();
-        AnimationEngineStub IAnimationEngine.LoadAnimationClip(string clipName, string path) => this.LoadAnimationClip(clipName, path);
-        AnimationEngineStub IAnimationEngine.PlayAnimation(string entityName, string clipName, float blendInTime) => this.PlayAnimation(entityName, clipName, blendInTime);
-        AnimationPose IAnimationEngine.GetAnimationPose(string entityName) => this.GetAnimationPose(entityName);
-        // ... autres méthodes de IAnimationEngine
+        // Les neuf implementations EXPLICITES qui vivaient ici sont parties, et
+        // c'est la consequence directe de la reduction d'IAnimationEngine a trois
+        // membres : `X IAnimationEngine.Membre` exige que Membre figure au
+        // contrat, d'ou neuf CS0539.
+        //
+        // Elles ne perdent rien. C'etaient de purs relais — `=> this.Membre` —
+        // vers des membres PUBLICS du stub, qui restent tous en place : State,
+        // IsReady, Initialize, Update, Shutdown, Dispose, LoadAnimationClip,
+        // PlayAnimation, GetAnimationPose. Seule la forme explicite disparait.
+        //
+        // Le jour ou l'un d'eux rejoindra le contrat parce qu'un appelant reel
+        // le demande, il sera deja implemente.
 
         #endregion
 

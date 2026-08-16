@@ -1098,6 +1098,64 @@ namespace Engine.Jobsystem
 
         #endregion
 
+        #region Contrat IThreadAffinityManager
+
+        // Les deux membres releves sur MovementAnimationBridgeSystem, qui declarait
+        // l'interface faute de pouvoir la placer dans Engine. AssignSystemToThread y
+        // est appelee dix fois (lignes 3329 a 3338), retour ignore ; RunOnThread n'a
+        // pas encore d'appelant, son contrat vient de la declaration relevee.
+
+        private readonly Dictionary<Snake2000.Engine.Core.ISystem, int> _systemAssignments =
+            new Dictionary<Snake2000.Engine.Core.ISystem, int>();
+
+        /// <summary>
+        /// Associe un systeme a un thread worker. L'association est enregistree ici ;
+        /// l'epinglage effectif passera par INativeAffinityProvider, qui est encore un
+        /// marqueur sans membre.
+        /// </summary>
+        public void AssignSystemToThread(Snake2000.Engine.Core.ISystem system, int threadIndex)
+        {
+            if (_disposed) throw new ObjectDisposedException(GetType().Name);
+            if (system == null) throw new ArgumentNullException(nameof(system));
+            EnsureValidThreadIndex(threadIndex);
+            EnsureInitializedOrReady();
+
+            _lock.EnterWriteLock();
+            try
+            {
+                _systemAssignments[system] = threadIndex;
+            }
+            finally
+            {
+                _lock.ExitWriteLock();
+            }
+        }
+
+        /// <summary>
+        /// Execute une action sur le thread worker demande.
+        /// </summary>
+        /// <remarks>
+        /// L'index est valide contre le nombre de workers, mais l'execution part
+        /// aujourd'hui sur un thread dedie du pool plutot que sur le worker nomme :
+        /// INativeAffinityProvider ne porte encore aucun membre d'epinglage. La
+        /// signature, elle, est celle que l'appelant attend.
+        /// </remarks>
+        public Task RunOnThread(int threadIndex, Action action)
+        {
+            if (_disposed) throw new ObjectDisposedException(GetType().Name);
+            if (action == null) throw new ArgumentNullException(nameof(action));
+            EnsureValidThreadIndex(threadIndex);
+            EnsureInitializedOrReady();
+
+            return Task.Factory.StartNew(
+                action,
+                CancellationToken.None,
+                TaskCreationOptions.LongRunning,
+                TaskScheduler.Default);
+        }
+
+        #endregion
+
         #region AAA Ideas Implementation (Methods & Properties)
 
         // --- 1. Critiques et fondations ---

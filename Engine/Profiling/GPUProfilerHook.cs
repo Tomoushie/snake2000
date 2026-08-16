@@ -9,10 +9,12 @@ using System.Collections.Concurrent;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Engine.Profiling;
-using Engine.Events;
-using Engine.Jobsystem; // Pour IJobSystem, ThreadAffinityManager
+using Engine.Jobsystem; // Pour ThreadAffinityManager
 using Engine.Rendering; // Pour IRenderEngine
-using Engine.Utilities; // Pour structures communes
+using Engine.Core;              // IJobSystem
+using Snake2000.Engine.Core;    // EventBus, Profiler
+// Engine.Events et Engine.Utilities sont partis : ni l'un ni l'autre n'existe
+// dans le depot, ils designaient une organisation prevue et jamais creee.
 using System.IO;
 using System.Runtime.InteropServices;
 
@@ -252,7 +254,10 @@ namespace Engine.Profiling
     #endregion
 
     #region Structures de données
-    public struct GPUProfilerHookConfig
+    // `class` et non `struct` : GPUProfilerHook._config est lu par Volatile, qui
+    // exige un type reference — le CS0677. Troisieme occurrence du meme piege,
+    // apres ThreadAffinityManagerConfig et AudioEngineConfig.
+    public class GPUProfilerHookConfig
     {
         public bool EnableContinuousCapture { get; set; }
         public float CaptureIntervalMs { get; set; }

@@ -28,7 +28,13 @@ public class EventBus
 
     private Dictionary<Type, List<Delegate>> _subscribers = new();
 
-    public void Subscribe<T>(Action<T> handler) where T : IMessage
+    // `virtual` sur les trois membres : le bus est passe en dependance a tout
+    // le moteur et DummyEventBus doit pouvoir le neutraliser dans les tests.
+    // C'est la base qui s'ouvre, et elle s'ouvre parce qu'il y a de vrais
+    // appelants — Publish neuf fois, Subscribe trois — donc la substitution
+    // veut dire quelque chose. Profiler et ResourceManager, mesures a zero
+    // appelant d'instance, ne recoivent rien.
+    public virtual void Subscribe<T>(Action<T> handler) where T : IMessage
     {
         var msgType = typeof(T);
         if (!_subscribers.ContainsKey(msgType))
@@ -37,14 +43,14 @@ public class EventBus
         _subscribers[msgType].Add(handler);
     }
 
-    public void Unsubscribe<T>(Action<T> handler) where T : IMessage
+    public virtual void Unsubscribe<T>(Action<T> handler) where T : IMessage
     {
         var msgType = typeof(T);
         if (_subscribers.ContainsKey(msgType))
             _subscribers[msgType].Remove(handler);
     }
 
-    public void Publish<T>(T message) where T : IMessage
+    public virtual void Publish<T>(T message) where T : IMessage
     {
         var msgType = typeof(T);
         if (_subscribers.TryGetValue(msgType, out var handlers))

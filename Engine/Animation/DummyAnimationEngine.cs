@@ -533,11 +533,15 @@ namespace Engine.Animation
         public override void Publish<T>(T @event) { /* no-op */ }
     }
 
+    // Aucun membre a neutraliser, et c'est le resultat d'une mesure : les deux
+    // seuls appels du depot sont `Profiler.BeginSample("Frame")` et
+    // `EndSample("Frame")` dans Engine.cs, tous deux STATIQUES. Aucune
+    // substitution d'instance ne peut les detourner. `MarkEvent` n'existait ni
+    // sur la base ni chez un appelant. Ce dummy sert de type substituable pour
+    // le parametre `Profiler` des Initialize, rien de plus — et le dire
+    // vaut mieux que trois `override` qui ne remplacaient rien.
     public class DummyProfiler : Profiler
     {
-        public override void BeginSample(string name) { /* no-op */ }
-        public override void EndSample(string name) { /* no-op */ }
-        public override void MarkEvent(string name) { /* no-op */ }
     }
 
     public class DummyJobSystem : IJobSystem
@@ -556,12 +560,14 @@ namespace Engine.Animation
         public void CompleteAll() { }
     }
 
+    // Meme constat, plus net encore : `Load`, `LoadAsync`, `Unload` et
+    // `UnloadAll` n'existent pas sur ResourceManager, qui porte
+    // `LoadResourceAsync` et `RegisterLoader`. Et AUCUN membre de
+    // ResourceManager, ni les uns ni les autres, n'est appele nulle part dans
+    // le depot. Il n'y a donc rien a neutraliser : ce dummy est un type
+    // substituable, pas une implementation.
     public class DummyResourceManager : ResourceManager
     {
-        public override T Load<T>(string path) => default;
-        public override Task<T> LoadAsync<T>(string path) => Task.FromResult<T>(default);
-        public override void Unload(object resource) { }
-        public override void UnloadAll() { }
     }
 
     public class DummyRenderDevice : IRenderDevice
@@ -1082,7 +1088,10 @@ namespace Engine.Animation
 
         public DummyAnimationEngineState GetState() => State;
 
-        public bool IsReady() => IsReady;
+        // `public bool IsReady() => IsReady;` retiree : elle portait le nom de la
+        // propriete declaree ligne 810, d'ou le CS0102 — et personne ne l'appelait,
+        // les quatre sites du fichier lisent la propriete. Ecrite telle quelle elle
+        // n'aurait de toute facon pas pu se compiler.
 
         #endregion
 

@@ -212,20 +212,29 @@ qui ne soit un choix assumé. La suite n'est plus de l'assainissement :
    chantier structurel, et il est enfin ouvrable.
 3. **`AI/` et `Systems/`, jamais mesurés — et il y a du vrai travail dedans.**
    `python Tools/diagnostic.py AI Systems` rend **0 fichier retenu** : aucun ne
-   passe la validation. Mais les deux dossiers ne se ressemblent pas, et
-   **aucun des deux n'est suivi par git** — rien n'y est récupérable.
+   passe la validation. Mais les deux dossiers ne se ressemblent pas.
 
    `Systems/` : huit fichiers de débris, appels d'outil JSON ou JavaScript brut,
    tous des tentatives avortées d'extraire du code depuis `Snake2000.cs`.
    `WeatherSystemcs` n'a même pas d'extension `.cs`. Même traitement que les 18
-   déjà vidés, mais **à confirmer avec Tom d'abord** : git n'en a pas de copie.
+   déjà vidés, mais **à confirmer avec Tom d'abord** : ces neuf fichiers ne sont
+   **pas suivis par git**, rien n'y serait récupérable.
 
    `AI/SnakeAI.cs` : **24 Ko de C# écrit à la main** — `enum AIType`, des
    personnalités d'IA. Ce n'est pas un fichier compilable : il commence par
    « Ajouter dans la section des variables membres », c'est un fragment destiné
-   à être collé dans `Snake2000.cs`. **Ne pas le vider ni le supprimer.** Il lui
-   faut soit une intégration dans `Snake2000.cs`, soit une enveloppe
-   `namespace` + `class` pour devenir un fichier à part entière.
+   à être collé dans `Snake2000.cs`. Il est **suivi par git**, contrairement à
+   `Systems/`. **Ne pas le vider ni le supprimer.**
+
+   **C'est fait.** Le fichier est enveloppé dans `namespace Snake2000` /
+   `public partial class Snake2000` — sans répéter `: Form`, la classe de base
+   ne se déclarant qu'une fois entre partiels. Pas une ligne de son contenu n'a
+   bougé. Mesuré avec `AI Game Engine` : **81 fichiers, 41 erreurs, dont zéro
+   pour `SnakeAI.cs`.**
+
+   Mesuré seul (`diagnostic.py AI`), il en montre quatre : `Direction` vient de
+   `Game/Enums.cs`, absent de cette compilation. **Artefact de mesure, pas
+   défaut** — toujours mesurer un fichier avec les dossiers dont il dépend.
 4. **Faire compiler le projet pour de bon.** `Snake2000App/Snake2000App.csproj`
    ne référence **que** `..\Snake2000.cs`, 113 lignes — les arbres `Engine/`,
    `Game/`, `AI/` et `Systems/` sont hors compilation. Les y faire entrer est un

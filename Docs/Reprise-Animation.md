@@ -1,8 +1,8 @@
 # Reprise — le bloc Animation
 
-Document de passation. Écrit le 16 août 2026, **réécrit deux fois le même jour** :
-d'abord à la fin de la session qui a tranché sur `IAnimationEngine`, puis à la
-fin de celle qui a tranché sur `IJobSystem` et sur les dummies.
+Document de passation, écrit le 16 août 2026 et tenu à jour depuis. Il porte
+l'état **mesuré**, ce qui a été tranché et ne doit pas être rouvert, et la
+méthode qui a fait tomber le compteur de 1 629 à 41.
 
 ## Où en est le projet
 
@@ -29,17 +29,23 @@ aucun membre : les déclarer produirait des coquilles vides. Ce sont des erreurs
 nommées, pas un manque masqué. Elles disparaîtront le jour où un appelant réel
 dictera un contenu.
 
-## La règle qui a tranché trois fois
+## La règle qui a tranché quatre fois
 
 **Le contrat est ce que les appelants appellent, pas ce que la déclaration
-annonce.** Elle a servi trois fois de suite, et à chaque fois la mesure a donné
-un résultat que personne n'aurait deviné :
+annonce.** À chaque fois, la mesure a donné un résultat que personne n'aurait
+deviné :
 
 | déclaration | membres déclarés | appelés |
 |---|---|---|
 | `IAnimationEngine` | 655 | **0** |
 | `IJobSystem` | 408 | **3** |
+| `struct MovementComponent` (champs `*Knowledge`) | 1 509 | **0** |
 | `ResourceManager` | 6 | **0** |
+
+Le corollaire, appris à ses dépens : **le nombre d'usages ne dit rien du
+contrat.** `IAnimationClip` compte dix usages et pas un seul membre lu — ce sont
+des usages de *signature*. Seuls les membres nommés font un contrat, et c'est
+la seule chose qu'un brief puisse exiger.
 
 Le geste est toujours le même : la déclaration d'origine part dans
 `Docs/Intention/`, le contrat garde les membres mesurés, et **un membre ne
@@ -132,25 +138,26 @@ substituables** pour les paramètres des `Initialize`, ce qu'ils sont réellemen
 L'épinglage réel n'a pas lieu — `INativeAffinityProvider` est un marqueur sans
 membre — et le commentaire le dit plutôt que de laisser le nom promettre.
 
-## Le piège qui s'est présenté deux fois
+## Le piège qui s'est présenté trois fois
 
 Un type déclaré `struct` alors que le code appelant le lit par
 `Volatile.Read`/`Volatile.Write`, qui exigent un type référence. Le symptôme est
 un `CS0677` — « un champ volatile ne peut pas être de ce type » — et c'est un
 **progrès déguisé** : il ne peut apparaître qu'une fois le type enfin résolu.
 
-`ThreadAffinityManagerConfig` est devenu une classe pour cette raison. Il reste
-deux `CS0677` dans le dépôt : les traiter de la même façon, en lisant le code
-appelant avant de choisir la forme.
+`ThreadAffinityManagerConfig`, `AudioEngineConfig` et `GPUProfilerHookConfig`
+sont tous les trois devenus des classes pour cette raison. **Il n'en reste
+aucun** ; si un quatrième apparaît, le traiter de la même façon.
 
-## La leçon principale de cette session
+## Le geste le plus rentable de tout le chantier
 
-**Chercher le type dans le dépôt avant de conclure qu'il manque.** La version
-précédente de ce document annonçait « 33 types absents » pour
-`ThreadAffinityManager`. En les cherchant un par un, la moitié existait déjà —
-`IJobSystem`, `JobHandle`, `JobCategory`, `CategoryAffinityMap` dans le fichier
-voisin, `EventBus`, `Profiler`, `ResourceManager` dans `Engine/Engine.cs`. Trois
-lignes d'`using` ont fait tomber ce fichier de 75 à 40 erreurs.
+**Chercher le type dans le dépôt avant de conclure qu'il manque.** C'est ce qui
+a produit l'essentiel de la chute de 509 à 41 — pas la génération.
+
+Premier cas rencontré : ce document annonçait « 33 types absents » pour
+`ThreadAffinityManager`. En les cherchant un par un, la moitié existait déjà.
+Trois lignes d'`using` ont fait tomber ce fichier de 75 à 40 erreurs. Le motif
+s'est ensuite répété sur chaque gros fichier.
 
 Le script est écrit, il suffit de l'adapter au fichier visé :
 
@@ -158,9 +165,10 @@ Le script est écrit, il suffit de l'adapter au fichier visé :
 grep -rn "class MonType\b\|struct MonType\b\|interface MonType\b" --include=*.cs .
 ```
 
-Trois espaces de noms sont importés un peu partout et **n'existent nulle part** :
-`Engine.Events`, `Engine.Utilities`, `Engine.Services`, `Engine.Jobs`,
-`Engine.Resources`. Ils désignaient une organisation prévue, jamais créée. Les
+Six espaces de noms étaient importés un peu partout et **n'existent nulle
+part** : `Engine.Events`, `Engine.Utilities`, `Engine.Services`, `Engine.Jobs`,
+`Engine.Resources`, `Engine.Mathematics`. Ils désignaient une organisation
+prévue, jamais créée. Tous ont été retirés. Les
 retirer coûte une ligne et supprime des `CS0234`.
 
 ## Les fichiers écartés de la mesure

@@ -15,11 +15,23 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Engine.Events;
-using Engine.Profiling;
+// Ce fichier visait a l'origine une arborescence Engine.Events /
+// Engine.Profiling / Engine.Utilities / Engine.Mathematics qui n'a jamais ete
+// construite. Les directives pointent desormais vers ce qui existe :
+//   Mathematics -> System.Numerics + System.Drawing
+//   Events / Profiling / Utilities -> Snake2000.Engine.Core (EventBus,
+//   Profiler, ResourceManager)
+using System.Drawing;
+using System.Numerics;
+using Engine.Core;
 using Engine.Jobsystem;
-using Engine.Utilities;
-using Engine.Mathematics; // Vector3, Quaternion, Matrix4x4, Color, etc.
+using Snake2000.Engine.Core;
+
+// Vector2 existe dans System.Numerics ET dans Snake2000.Engine.Core : sans cet
+// alias, chaque usage serait ambigu (CS0104). Le rendu travaille en flottants,
+// donc c'est la version de System.Numerics qui fait foi ici.
+using Vector2 = System.Numerics.Vector2;
+using Rect = System.Drawing.RectangleF;
 
 namespace Engine.Rendering
 {

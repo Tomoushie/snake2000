@@ -1,5 +1,11 @@
 using System;
 using System.Collections.Generic;
+using Snake2000.Engine.AI;
+using Snake2000.Engine.Animation;
+using Snake2000.Engine.Core;
+using Snake2000.Engine.Gameplay;
+namespace Snake2000.Engine.Physics;
+
 using System.Drawing; // Pour RectangleF, Point, etc. (ou utiliser une structure personnalisée)
 using System.Numerics; // Pour Vector2, Vector3 si disponible, sinon on utilise notre Vector2 de Engine.cs
 

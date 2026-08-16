@@ -1,4 +1,6 @@
 // Game/Gameplay/Movement/System/MovementImpactSystem.cs
+using Snake2000.Engine.Core;
+using Snake2000.Engine.Physics;
 
 public class MovementImpactSystem : ISystem
 {

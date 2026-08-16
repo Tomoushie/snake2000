@@ -3,6 +3,12 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Linq;
 using System.Diagnostics;
+using Snake2000.Engine.AI;
+using Snake2000.Engine.Animation;
+using Snake2000.Engine.Gameplay;
+using Snake2000.Engine.Physics;
+namespace Snake2000.Engine.Core;
+
 
 // --- 137. CORE ENGINE (Déjà présent, à étendre) ---
 

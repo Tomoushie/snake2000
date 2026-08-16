@@ -1,4 +1,6 @@
 // Game/Gameplay/Movement/Components/MovementComponent.cs
+using Snake2000.Engine.AI;
+using Snake2000.Engine.Core;
 
 public enum MovementType
 {

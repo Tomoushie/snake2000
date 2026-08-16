@@ -1,6 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Snake2000.Engine.Animation;
+using Snake2000.Engine.Core;
+using Snake2000.Engine.Gameplay;
+using Snake2000.Engine.Physics;
+namespace Snake2000.Engine.AI;
+
 using System.Threading.Tasks; // Pour le multithreading
 using System.Diagnostics; // Pour le profiling
 using System.Drawing; // Pour les couleurs de debug

@@ -3,6 +3,12 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.Serialization.Formatters.Binary;
+using Snake2000.Engine.AI;
+using Snake2000.Engine.Animation;
+using Snake2000.Engine.Core;
+using Snake2000.Engine.Physics;
+namespace Snake2000.Engine.Gameplay;
+
 
 // --- 137. CORE ENGINE (Concepts repris) ---
 // IManager, IMessage, EventBus, IComponent, ISystem, Entity, EntityManager sont définis dans Engine.cs

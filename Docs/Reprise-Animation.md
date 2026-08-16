@@ -1,130 +1,183 @@
 # Reprise — le bloc Animation
 
-Document de passation, écrit le 16 août 2026 à la fin d'une session consacrée
-à l'assainissement de `Game/` et `Engine/`. Il contient ce qu'il faut pour
-reprendre le chantier de l'animation sans refaire le diagnostic.
+Document de passation, écrit le 16 août 2026 et **réécrit le même jour** à la
+fin de la session qui a tranché sur `IAnimationEngine`. Il remplace la version
+précédente, dont l'état de départ n'existe plus.
 
 ## Où en est le projet
 
-Compilé avec `python Tools/diagnostic.py Engine Game` :
+Mesuré avec `python Tools/diagnostic.py Engine Game` :
 
-| zone | erreurs |
-|---|---|
-| `Game/` | **0** |
-| `Engine/` hors animation | 118 |
-| bloc animation | 1 502 |
+| | fichiers retenus | erreurs |
+|---|---|---|
+| avant cette session | 71 | 1 629 |
+| **maintenant** | **77** | **509** |
 
-Le point de départ de la session était 1 770 erreurs dont 14 dans `Game/`.
-
-Commits de la session, tous poussés sur `origin/main` :
-
-| commit | objet |
-|---|---|
-| `9c14c54` | EventBus : les abonnés disparaissaient au ramasse-miettes |
-| `9496236` | trois conflits `CS0101` dans `Game/` |
-| `fa9b773` | directives `using` manquantes |
-| `a8ad521` | le moteur sort de l'espace de noms global |
-| `a9edc30` | lot Movement complété |
-| `f6b61ae` | **`Game/` compile sans erreur** |
-| `d0c033a` | `IRenderEngine` rebranché |
-| `7f5e617` | sept types d'IA déclarés |
-
-## Le diagnostic du bloc animation
-
-Trois fichiers portent 1 502 des 1 629 erreurs restantes.
+Le nombre de fichiers compte autant que celui des erreurs : six fichiers sont
+entrés dans la mesure, dont cinq très gros qui n'y étaient jamais apparus. Le
+compteur d'hier était flatteur parce qu'il ignorait 380 Ko de code.
 
 | fichier | erreurs | nature |
 |---|---|---|
-| `Engine/IAnimationEngine.cs` | 560 | `CS0246` × 528 — types jamais déclarés |
-| `Engine/Animation/DummyAnimationEngine.cs` | 488 | `CS0535` × 406 — membres d'interface non implémentés |
-| `Engine/Animation/AnimationEngineStub.Core.cs` | 454 | `CS0535` × 415 — idem |
+| `Game/…/MovementAnimationBridgeSystem.cs` | 179 | 83 membres dupliqués dans une classe, le reste en types absents |
+| `Engine/Animation/DummyAnimationEngine.cs` | 94 | types absents |
+| `Engine/Audio/IAudioEngine.cs` | 87 | types absents |
+| `Engine/Animation/Tests/AnimationEngineStubOrchestrator.cs` | 51 | types absents |
+| `Engine/Animation/AnimationEngineStub.cs` + `.Core.cs` | 53 | types absents |
+| `Engine/Jobsystem/IJobsystem.cs` | 24 | 19 types de rapport absents |
+| `Engine/Profiling/GPUProfilerHook.cs` | 12 | types absents |
 
-**La racine est `IAnimationEngine.cs`.** C'est une interface de 3 268 lignes
-qui référence une cinquantaine de types jamais écrits — `AnimationClipInstance`,
-`AnimationGraph`, `RootMotionDelta`, `AnimationBlendSpace`, `AnimationSkeleton`,
-`AnimationIKRequest`, `AnimationLayer` — et qui déclare plusieurs centaines de
-membres.
+Par code : `CS0246` × 372 domine tout le reste, puis `CS0102` × 83 — les 83 du
+bridge — et `CS0234` × 18.
 
-Les deux implémentations qui prétendent la respecter n'en implémentent
-quasiment rien : 406 et 415 membres manquants. Autrement dit, **personne n'a
-jamais implémenté ce contrat**. C'est une intention, pas une interface.
+## Ce qui a été tranché, et qu'il ne faut pas rouvrir
 
-### La décision à prendre avant de coder
+### `IAnimationEngine` est réduit à trois membres
 
-Deux voies, et elles n'ont pas le même coût :
+L'interface faisait 3 268 lignes, 448 méthodes et 207 propriétés, et
+référençait près de 200 types jamais écrits. **La mesure des appelants donnait
+zéro membre appelé sur 655.** Un seul consommateur existe hors du bloc
+animation, `MovementAnimationBridgeSystem`, et il en attend trois :
 
-1. **Réduire l'interface à ce qui est réellement utilisé.** Relever les membres
-   effectivement appelés dans le reste du moteur et du jeu, tailler
-   `IAnimationEngine` à cette taille, puis n'écrire que les types nécessaires.
-   Les centaines de `CS0535` disparaissent d'elles-mêmes.
-2. **Écrire les cinquante types manquants et implémenter les 800 membres.**
-   Fidèle à l'intention d'origine, mais c'est plusieurs jours de génération
-   pour un contrat que rien n'appelle encore.
-
-La première voie est recommandée. Commencer par mesurer ce qui est appelé :
-
-```bash
-grep -rn "IAnimationEngine\|_animationEngine\." --include=*.cs Engine Game
+```csharp
+void InitializeBridge(IAnimationBridge bridge);
+void ShutdownBridge(IAnimationBridge bridge);
+Vector2 ExtractRootMotionDelta(Snake2000.Engine.Core.Entity entity);
 ```
 
-### Les sept derniers conflits `CS0101`
+Aucun des trois ne figurait dans les **trois** déclarations concurrentes du nom
+`IAnimationEngine` qui coexistaient alors.
 
-Tous dans ce bloc, et tous du même geste : un fichier découpé sans que
-l'original soit vidé.
+La déclaration d'origine est conservée dans `Docs/Intention/IAnimationEngine.cs.txt`.
+Elle reste le repère de ce que le moteur vise, sans faire échouer la
+compilation. **Ne la réintroduire dans `Engine/` sous aucun prétexte** : le jour
+où un membre sera réellement appelé, il rejoindra le contrat un par un.
 
-| espace de noms | types en double | fichiers |
-|---|---|---|
-| `Engine.Animation` | `DiagnosticsLevel`, `IAnimationEngine`, `IAnimationSubsystem`, `VersionInfo` | `AnimationEngineStub.cs` + `AnimationEngineStub.Core.cs` |
-| `Engine.Animation.Test` | `AlertPriority`, `AlertSeverity` | `Tests/CommonTypes.cs` + `Tests/OrchestratorDashboard.cs` |
-| `Engine.Rendering` | `IRenderDevice` | `Animation/IRenderEngine.cs` + `Rendering/IRenderPipeline.cs` |
+Le marqueur `IAnimationBridge` existe pour que le moteur reçoive le pont sans
+dépendre de `Game/`. C'est le patron à reprendre chaque fois que `Engine`
+semble avoir besoin d'un type de `Game`.
 
-La même paire de fichiers produit aussi un `CS0260` — modificateur `partial`
-manquant sur `IRenderPipeline`, déclaré des deux côtés. Ajouter `partial`
-masquerait la duplication au lieu de la trancher : à traiter avec les sept
-`CS0101` ci-dessus, en décidant quel fichier garde la déclaration.
+### Le découpage d'`AnimationEngineStub` est terminé
 
-`python Tools/doublons.py` donne la liste complète et à jour.
+`AnimationEngineStub.cs` était l'original d'un découpage dont personne n'avait
+vidé la source. Les 30 types et 54 champs qu'il redéclarait étaient identiques
+à ceux des partiels, et sont partis. Les **méthodes**, elles, avaient divergé :
+l'original gardait la logique métier — budget de frame, moniteur de threads,
+détecteur de surcharge, mode safe, plugins — là où le partiel la remplaçait par
+`// ... (logique de …) ...` tout en apportant l'instrumentation neuve
+(`_metricCollector`, `_subsystemProfiler`, `_snapshotHistory`).
 
-### Deux conventions d'espaces de noms cohabitent
+Règle appliquée, à reprendre si un cas analogue apparaît : **la version qui
+porte la logique reste, l'instrumentation de l'autre est reportée dedans.**
 
-Le moteur porte `Snake2000.Engine.*` pour les cinq fichiers assainis pendant la
-session, et `Engine.*` pour le bloc animation, rendu et jobsystem
-(`Engine.Animation`, `Engine.Rendering`, `Engine.Core`, `Engine.Jobsystem`).
-Unifier est souhaitable, mais **après** avoir tranché sur l'interface : le faire
-avant reviendrait à ranger une pièce qu'on va vider.
+## Le piège qui s'est présenté deux fois
 
-## Ce qui reste hors animation — 118 erreurs
+Un type déclaré `struct` alors que le code appelant le lit par
+`Volatile.Read`/`Volatile.Write`, qui exigent un type référence. Le symptôme est
+un `CS0677` — « un champ volatile ne peut pas être de ce type » — et c'est un
+**progrès déguisé** : il ne peut apparaître qu'une fois le type enfin résolu.
 
-Deux fichiers, même patron que `Engine/AI/AITypes.cs` : un fichier compagnon de
-types, produit par l'orchestrateur à partir des usages relevés.
+`ThreadAffinityManagerConfig` est devenu une classe pour cette raison. Il reste
+deux `CS0677` dans le dépôt : les traiter de la même façon, en lisant le code
+appelant avant de choisir la forme.
 
-- **`Engine/Jobsystem/ThreadAffinityManager.cs`** — 75 erreurs, 33 types absents
-  (`ThreadAffinityManagerConfig`, `CPUTopology`, `CategoryAffinityMap`,
-  `IAffinityPolicy`, `ReservedThreadInfo`, `ThreadLoadDistribution`…)
-- **`Engine/Jobsystem/IJobsystem.cs`** — 32 erreurs, 19 types de rapport absents
-  (`JobHeatmapReport`, `JobTelemetryData`, `JobBudgetTrendReport`,
-  `ThreadTelemetryData`…)
+## La leçon principale de cette session
 
-Plus `OrchestratorDashboard.cs` (7) et `IRenderPipeline.cs` (4), qui relèvent du
-bloc animation.
+**Chercher le type dans le dépôt avant de conclure qu'il manque.** La version
+précédente de ce document annonçait « 33 types absents » pour
+`ThreadAffinityManager`. En les cherchant un par un, la moitié existait déjà —
+`IJobSystem`, `JobHandle`, `JobCategory`, `CategoryAffinityMap` dans le fichier
+voisin, `EventBus`, `Profiler`, `ResourceManager` dans `Engine/Engine.cs`. Trois
+lignes d'`using` ont fait tomber ce fichier de 75 à 40 erreurs.
 
-## La boucle de travail qui a fonctionné
+Le script est écrit, il suffit de l'adapter au fichier visé :
 
-1. Relever le contrat exact dans le fichier appelant — signatures de
-   constructeurs, membres lus, interfaces imposées. C'est cette précision qui
-   fait la qualité du résultat, pas la longueur de la demande.
-2. Écrire un brief numéroté et envoyer à l'orchestrateur.
-3. Relire. **Systématiquement**, Qwen respecte les bornes là où c'est commode et
-   les abandonne dans les propriétés : `HealthSystem` exposait un
-   `CurrentHealth` libre, `MovementImpactComponent` un `Bounciness` non serré.
-   Vérifier chaque contrainte du brief une à une.
+```bash
+grep -rn "class MonType\b\|struct MonType\b\|interface MonType\b" --include=*.cs .
+```
+
+Trois espaces de noms sont importés un peu partout et **n'existent nulle part** :
+`Engine.Events`, `Engine.Utilities`, `Engine.Services`, `Engine.Jobs`,
+`Engine.Resources`. Ils désignaient une organisation prévue, jamais créée. Les
+retirer coûte une ligne et supprime des `CS0234`.
+
+## Les fichiers écartés de la mesure
+
+`Tools/diagnostic.py` ne compile que les fichiers que `valider_code` accepte.
+Un fichier syntaxiquement cassé disparaît donc du compteur **sans prévenir**.
+Quatre en sont sortis pendant cette session pour une faute unique :
+
+| fichier | faute |
+|---|---|
+| `GPUProfilerHook.cs` | 20 `#region` pour 19 `#endregion` |
+| `IAudioEngine.cs` | 22 pour 21 |
+| `AnimationEngineStub.cs` | un paramètre nommé `params`, mot-clé |
+| `AnimationEngineStubOrchestrator.cs` | une clause `using` après des déclarations |
+| `MovementAnimationBridgeSystem.cs` | une virgule au lieu d'un point-virgule |
+
+Huit lignes de diff pour 380 Ko réintégrés. **Il reste 19 fichiers non vides
+hors mesure**, dont dix-sept contiennent un appel d'outil JSON au lieu de code —
+`Engine/Data/`, `Engine/CollisionSystem.cs`, `Game/Gameplay/BossSystem.cs` et
+voisins. Ce sont des débris de génération, pas des repères.
+
+Pour les lister à tout moment :
+
+```bash
+python Tools/diagnostic.py Engine Game
+```
+
+et comparer « fichiers retenus » au nombre de `.cs` non vides.
+
+## Ce qui reste à faire, par ordre de rendement
+
+1. **`IJobsystem.cs`, 19 types de rapport** — `JobHeatmapReport`,
+   `JobTelemetryData`, `ThreadTelemetryData`… Même patron que le lot d'affinité
+   qui vient d'être généré. C'est le plus direct.
+2. **`ThreadAffinityManager` doit implémenter `IThreadAffinityManager`** —
+   `AssignSystemToThread` et `RunOnThread`, deux `CS0535` assumés. L'interface a
+   été remontée de `Game` vers `Engine.Core` avec son contrat exact.
+3. **Le bridge, 179** — dont 83 membres dupliqués dans une seule classe. Lot à
+   part entière, même méthode que le découpage d'`AnimationEngineStub`.
+4. **`IAudioEngine` 87 et `AnimationEngineStubOrchestrator` 51** — nouveaux
+   venus dans la mesure, jamais examinés.
+5. **Unifier les espaces de noms** — `Snake2000.Engine.*` contre `Engine.*`.
+   Maintenant que l'arbitrage sur l'interface est fait, ce chantier est enfin
+   ouvrable. Il ne l'était pas avant.
+
+## La boucle de travail
+
+L'orchestrateur écoute sur **`http://localhost:5001`**, pas 8000. Vérifier
+d'abord :
+
+```bash
+curl -s http://localhost:5001/health
+```
+
+La réponse donne le modèle, le workspace et l'état du contrôle Roslyn. Il lui
+faut Qwen sur Ollama en `http://localhost:11434`.
+
+1. Relever le contrat exact dans le fichier appelant — chaque ligne qui
+   mentionne le type manquant. C'est cette précision qui fait la qualité du
+   résultat, pas la longueur de la demande.
+2. Écrire un brief numéroté, passer par `/dry-run` avant
+   `/generate-and-integrate`.
+3. **Relire.** Systématiquement.
 4. Vérifier au compilateur, pas à l'œil.
 
-L'orchestrateur doit voir le projet, sinon il génère à l'aveugle :
+### Ce que la relecture a rattrapé cette fois
 
-```bash
-$env:WORKSPACE_DIR = "E:\Corpus\Snake2000"
-```
+Le lot d'affinité est revenu avec **treize types sur quinze réduits à des
+coquilles sans membre**. Le brief disait « n'invente pas de membres » et ne
+couvrait, pour les membres exigés, que les types construits par `new X { … }`.
+Qwen a suivi à la lettre. La compilation passe — le code appelant n'interroge
+jamais ces types — mais ce sont des repères, pas des types.
+
+**Pour le lot suivant, exiger les membres *lus* autant que ceux affectés à la
+construction**, et donner dans le brief les lignes d'usage qui les montrent.
+
+Le travers connu reste vrai par ailleurs : Qwen respecte les bornes dans les
+méthodes et les abandonne dans les propriétés. Vérifier chaque contrainte du
+brief une par une.
 
 ## Ce qu'il ne faut pas faire
 

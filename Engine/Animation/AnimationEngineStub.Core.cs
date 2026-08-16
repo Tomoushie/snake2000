@@ -324,98 +324,13 @@ namespace Engine.Animation
 
         #region Constructors (Core)
 
-        public AnimationEngineStub()
-        {
-            _stateWatchdogTimer = new Timer(WatchdogCallback, null, Timeout.Infinite, Timeout.Infinite);
-            // Les métriques sont initialisées dans MetricCollector via Metrics.cs
-            _version = new VersionInfo("1.0.0-stub", DateTime.UtcNow);
-        }
+        // AnimationEngineStub : version fusionnee dans AnimationEngineStub.cs
 
         #endregion
 
         #region Lifecycle Methods (Core)
 
-        public AnimationEngineStub Initialize(AnimationEngineConfig config, EventBus eventBus, Profiler profiler, IJobSystem jobSystem, ResourceManager resourceManager)
-        {
-            lock (_stateLock)
-            {
-                if (_state != AnimationEngineState.Uninitialized)
-                    throw new InvalidOperationException("L'AnimationEngineStub est déjà initialisé.");
-
-                _config = config ?? throw new ArgumentNullException(nameof(config));
-                _eventBus = eventBus;
-                _profiler = profiler;
-                _jobSystem = jobSystem;
-                _resourceManager = resourceManager;
-
-                // Initialiser la configuration du stub
-                _stubConfig = new AnimationEngineStubConfig
-                {
-                    SimulationMode = StubSimulationMode.Normal,
-                    EnableCallLogging = false,
-                    EnableAssertions = true,
-                    EnableSnapshots = false,
-                    EnableReplay = false,
-                    EnableFaultInjection = false,
-                    EnableValidation = false,
-                    EnablePerformanceSim = false,
-                    EnableMemoryPressureSim = false,
-                    EnableThreadingSim = false,
-                    EnableHooks = false,
-                    QualityLevel = AnimationQualityLevel.High,
-                    UpdateMode = AnimationUpdateMode.Sequential
-                };
-
-                // A. Optimisation et structure : Appliquer les flags
-                var flags = _stubConfig.FeatureFlags;
-                _enableCallLogging = flags.HasFlag(StubFeatureFlags.CallLogging);
-                _enableAssertions = flags.HasFlag(StubFeatureFlags.Assertions);
-                _enableSnapshots = flags.HasFlag(StubFeatureFlags.Snapshots);
-                _enableReplay = flags.HasFlag(StubFeatureFlags.Replay);
-                _enableFaultInjection = flags.HasFlag(StubFeatureFlags.FaultInjection);
-                _enableValidation = flags.HasFlag(StubFeatureFlags.Validation);
-                _enablePerformanceSim = flags.HasFlag(StubFeatureFlags.PerformanceSim);
-                _enableMemoryPressureSim = flags.HasFlag(StubFeatureFlags.MemoryPressureSim);
-                _enableThreadingSim = flags.HasFlag(StubFeatureFlags.ThreadingSim);
-                _enableHooks = flags.HasFlag(StubFeatureFlags.Hooks);
-                _safeMode = flags.HasFlag(StubFeatureFlags.SafeMode);
-
-                // [AJOUT] Appliquer les nouveaux flags (doivent être gérés dans les fichiers concernés)
-                // bool enablePluginLoading = flags.HasFlag(StubFeatureFlags.PluginLoading);
-                // bool enableTelemetry = flags.HasFlag(StubFeatureFlags.Telemetry);
-                // ... etc ...
-
-                // Initialiser les sous-systèmes et les enregistrer via le registre
-                _blendTreeSystem = new AnimationBlendTreeSystem(this);
-                _stateMachineSystem = new AnimationStateMachineSystem(this);
-                _ikSystem = new AnimationInverseKinematicsSystem(this);
-                _proceduralSystem = new AnimationProceduralSystem(this);
-                _compressionSystem = new AnimationCompressionSystem(this);
-
-                _subsystemRegistry.Register(_blendTreeSystem);
-                _subsystemRegistry.Register(_stateMachineSystem);
-                _subsystemRegistry.Register(_ikSystem);
-                _subsystemRegistry.Register(_proceduralSystem);
-                _subsystemRegistry.Register(_compressionSystem);
-
-                // Planifier l'initialisation via le LifecycleManager
-                _lifecycleManager.AddForInitialization(_blendTreeSystem);
-                _lifecycleManager.AddForInitialization(_stateMachineSystem);
-                _lifecycleManager.AddForInitialization(_ikSystem);
-                _lifecycleManager.AddForInitialization(_proceduralSystem);
-                _lifecycleManager.AddForInitialization(_compressionSystem);
-
-                _lifecycleManager.InitializeAll();
-
-                _state = AnimationEngineState.Initializing;
-                // Simuler un peu de travail d'initialisation
-                Thread.Sleep(50);
-
-                _state = AnimationEngineState.Ready;
-                LogCall("Initialize");
-                return this;
-            }
-        }
+        // Initialize : version fusionnee dans AnimationEngineStub.cs
 
         // ... (Autres méthodes de cycle de vie : Suspend, Resume, Restart, Reset, Shutdown, Dispose) ...
 
@@ -423,138 +338,17 @@ namespace Engine.Animation
 
         #region Core Animation Methods (Core)
 
-        public AnimationEngineStub LoadAnimationClip(string clipName, string path)
-        {
-            if (_state != AnimationEngineState.Ready) throw new InvalidOperationException("Engine must be ready.");
-            LogCall($"LoadAnimationClip({clipName}, {path})");
+        // LoadAnimationClip : version fusionnee dans AnimationEngineStub.cs
 
-            if (!_loadedClipsDict.ContainsKey(clipName))
-            {
-                string checksum = GenerateChecksum(path);
-                var clip = new AnimationClip(clipName, 2.0f, new List<Keyframe>(), AnimationCompressionMethod.None, path, checksum, new Dictionary<string, object>{{"Author", "System"}, {"License", "Internal"}});
-                _loadedClipsBag.Add(clip);
-                _loadedClipsDict[clipName] = clip;
-                // [AJOUT] Mise à jour via MetricCollector
-                _metricCollector.Increment(OrchestratorMetricType.CompressedClipsLoaded, 1);
-                _metricCollector.Increment(OrchestratorMetricType.AssetsLoaded, 1);
-                // ... autres logiques (catalogue, intégrité, télémétrie) ...
-            }
-            return this;
-        }
+        // UnloadAnimationClip : version fusionnee dans AnimationEngineStub.cs
 
-        public AnimationEngineStub UnloadAnimationClip(string clipName)
-        {
-            if (_state != AnimationEngineState.Ready) throw new InvalidOperationException("Engine must be ready.");
-            LogCall($"UnloadAnimationClip({clipName})");
-            if (_loadedClipsDict.Remove(clipName, out var clip))
-            {
-                 _loadedClipsBag.TryTake(out _); // Retirer du bag aussi
-                 // [AJOUT] Mise à jour via MetricCollector
-                 _metricCollector.Increment(OrchestratorMetricType.CompressedClipsLoaded, -1);
-                 _metricCollector.Increment(OrchestratorMetricType.AssetsUnloaded, 1);
-                 // ... autres logiques (catalogue, télémétrie) ...
-            }
-            return this;
-        }
+        // PlayAnimation : version fusionnee dans AnimationEngineStub.cs
 
-        public AnimationEngineStub PlayAnimation(string entityName, string clipName, float blendInTime = 0.1f)
-        {
-            if (_state != AnimationEngineState.Ready) throw new InvalidOperationException("Engine must be ready.");
-            if (!_loadedClipsDict.ContainsKey(clipName)) throw new ArgumentException("Clip not loaded.", nameof(clipName));
-            LogCall($"PlayAnimation({entityName}, {clipName}, {blendInTime})");
+        // StopAnimation : version fusionnee dans AnimationEngineStub.cs
 
-            if (!_activeAnimations.Contains($"{entityName}_{clipName}"))
-            {
-                _activeAnimations.Add($"{entityName}_{clipName}");
-                _currentPoses[entityName] = new AnimationPose(new Dictionary<string, Transform>(), 0, _loadedClipsDict[clipName]);
-                // [AJOUT] Mise à jour via MetricCollector
-                _metricCollector.Increment(OrchestratorMetricType.ActivePlaybacks, 1);
-                // ... autres logiques (catalogue, télémétrie) ...
-            }
-            return this;
-        }
+        // Update : version fusionnee dans AnimationEngineStub.cs
 
-        public AnimationEngineStub StopAnimation(string entityName, string clipName, float blendOutTime = 0.1f)
-        {
-            if (_state != AnimationEngineState.Ready) throw new InvalidOperationException("Engine must be ready.");
-            LogCall($"StopAnimation({entityName}, {clipName}, {blendOutTime})");
-
-            if (_activeAnimations.Remove($"{entityName}_{clipName}"))
-            {
-                // [AJOUT] Mise à jour via MetricCollector
-                _metricCollector.Increment(OrchestratorMetricType.ActivePlaybacks, -1);
-                // ... autres logiques (télémétrie) ...
-            }
-            return this;
-        }
-
-        public AnimationEngineStub Update(float deltaTime)
-        {
-            lock (_stateLock)
-            {
-                if (_state != AnimationEngineState.Ready) return this;
-
-                _state = AnimationEngineState.Updating;
-
-                // [AJOUT] Réinitialiser les métriques de frame via MetricCollector
-                _metricCollector.SetValue(OrchestratorMetricType.TotalBonesAnimated, 0);
-                _metricCollector.SetValue(OrchestratorMetricType.BlendsCalculated, 0);
-                _metricCollector.SetValue(OrchestratorMetricType.IKIterations, 0);
-                _metricCollector.SetValue(OrchestratorMetricType.ProceduralUpdates, 0);
-
-                var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-
-                // ... (logique de simulation, de stress, de sécurité) ...
-
-                // [AJOUT] Mettre à jour les sous-systèmes via le registre et collecter leurs métriques
-                var blendSys = _subsystemRegistry.Get<AnimationBlendTreeSystem>();
-                var stateSys = _subsystemRegistry.Get<AnimationStateMachineSystem>();
-                var ikSys = _subsystemRegistry.Get<AnimationInverseKinematicsSystem>();
-                var procSys = _subsystemRegistry.Get<AnimationProceduralSystem>();
-                var compSys = _subsystemRegistry.Get<AnimationCompressionSystem>();
-
-                if (blendSys != null) { var sw = System.Diagnostics.Stopwatch.StartNew(); blendSys.Update(deltaTime); sw.Stop(); _subsystemProfiler.RecordTime(SubsystemType.BlendTree, (float)sw.ElapsedMilliseconds); _metricCollector.Increment(OrchestratorMetricType.BlendsCalculated, 1); }
-                if (stateSys != null) { var sw = System.Diagnostics.Stopwatch.StartNew(); stateSys.Update(deltaTime); sw.Stop(); _subsystemProfiler.RecordTime(SubsystemType.StateMachine, (float)sw.ElapsedMilliseconds); _metricCollector.Increment(OrchestratorMetricType.ActivePlaybacks, 1); } // Exemple
-                if (ikSys != null) { var sw = System.Diagnostics.Stopwatch.StartNew(); ikSys.Update(deltaTime); sw.Stop(); _subsystemProfiler.RecordTime(SubsystemType.InverseKinematics, (float)sw.ElapsedMilliseconds); _metricCollector.Increment(OrchestratorMetricType.IKIterations, 1); }
-                if (procSys != null) { var sw = System.Diagnostics.Stopwatch.StartNew(); procSys.Update(deltaTime); sw.Stop(); _subsystemProfiler.RecordTime(SubsystemType.Procedural, (float)sw.ElapsedMilliseconds); _metricCollector.Increment(OrchestratorMetricType.ProceduralUpdates, 1); }
-                if (compSys != null) { var sw = System.Diagnostics.Stopwatch.StartNew(); compSys.Update(deltaTime); sw.Stop(); _subsystemProfiler.RecordTime(SubsystemType.Compression, (float)sw.ElapsedMilliseconds); _metricCollector.Increment(OrchestratorMetricType.CompressedClipsLoaded, 1); } // Exemple
-
-                // ... (logique d'avancement des animations) ...
-
-                stopwatch.Stop();
-                // [AJOUT] Mise à jour via MetricCollector
-                _metricCollector.SetValue(OrchestratorMetricType.CpuUpdateMs, (float)stopwatch.ElapsedMilliseconds);
-
-                // ... (logique de frame time, de snapshot, de santé) ...
-
-                // [AJOUT] Enregistrer des événements de télémétrie via MetricCollector
-                _metricCollector.Increment(OrchestratorMetricType.TelemetryEvents, 1); // Exemple simple
-
-                // [AJOUT] Enregistrer le snapshot dans l'historique via MetricsSnapshotHistory
-                var currentMetrics = _metricCollector.GetSnapshot();
-                _snapshotHistory.RecordSnapshot(currentMetrics);
-
-                // ... (calcul de la santé, chaos, etc.) ...
-
-                _state = AnimationEngineState.Ready;
-                LogCall($"Update({deltaTime})");
-                return this;
-            }
-        }
-
-        public AnimationPose GetAnimationPose(string entityName)
-        {
-            if (_currentPoses.TryGetValue(entityName, out var pose))
-            {
-                LogCall($"GetAnimationPose({entityName})");
-                // [AJOUT] Mise à jour via MetricCollector
-                _metricCollector.Increment(OrchestratorMetricType.RenderedPoses, 1);
-                ValidatePose(pose);
-                return pose;
-            }
-            LogCall($"GetAnimationPose({entityName}) - Not Found");
-            return new AnimationPose(new Dictionary<string, Transform>(), 0, new AnimationClip());
-        }
+        // GetAnimationPose : version fusionnee dans AnimationEngineStub.cs
 
         #endregion
 
@@ -563,10 +357,10 @@ namespace Engine.Animation
         #region Sub-Systems Integration (via IAnimationSubsystem) (Core)
 
         public AnimationEngineStub ApplyBlendTree(string entityName, string treeName) { LogCall($"ApplyBlendTree({entityName}, {treeName})"); _metricCollector.Increment(OrchestratorMetricType.BlendsCalculated, 1); return this; }
-        public AnimationEngineStub SetAnimationState(string entityName, string stateName) { LogCall($"SetAnimationState({entityName}, {stateName})"); return this; }
+        // SetAnimationState : version fusionnee dans AnimationEngineStub.cs
         public AnimationEngineStub SolveIK(string entityName, string chainName, Vector3 target) { LogCall($"SolveIK({entityName}, {chainName}, {target})"); _metricCollector.Increment(OrchestratorMetricType.IKIterations, 1); return this; }
         public AnimationEngineStub UpdateProcedural(string entityName, string procAnimName) { LogCall($"UpdateProcedural({entityName}, {procAnimName})"); _metricCollector.Increment(OrchestratorMetricType.ProceduralUpdates, 1); return this; }
-        public AnimationEngineStub DecompressAnimation(AnimationClip clip) { LogCall($"DecompressAnimation({clip.Name})"); return this; }
+        // DecompressAnimation : version fusionnee dans AnimationEngineStub.cs
 
         #endregion
 
@@ -575,26 +369,13 @@ namespace Engine.Animation
         /// <summary>
         /// Hook appelé par le RenderGraph (via IRenderPipeline) pour récupérer la pose animée d'une entité avant le rendu.
         /// </summary>
-        public AnimationPose OnRenderPose(string entityName)
-        {
-            LogCall($"OnRenderPose({entityName})");
-            return GetAnimationPose(entityName);
-        }
+        // OnRenderPose : version fusionnee dans AnimationEngineStub.cs
 
         #endregion
 
         #region Logging, Assertions, Snapshots, Replay, Fault Injection (Core)
 
-        private void LogCall(string callDescription)
-        {
-            if (_enableCallLogging)
-            {
-                _callLog.Add($"[{DateTime.Now:HH:mm:ss.fff}] {callDescription}");
-                // ... (autres logiques de Diagnostics.cs, Events, etc.) ...
-                // [AJOUT] Enregistrer l'événement de log pour la télémétrie (via Metrics.cs)
-                _metricCollector.Increment(OrchestratorMetricType.TelemetryEvents, 1);
-            }
-        }
+        // LogCall : version complete conservee dans AnimationEngineStub.cs
 
         // ... (Autres méthodes : Assert, TakeSnapshot, ReplayFromSnapshot, InjectFault, ValidateState) ...
 
@@ -602,51 +383,19 @@ namespace Engine.Animation
 
         #region Simulation Methods (Core)
 
-        private void SimulateCPULoad() { if (_cpuLoadSim > 0) Thread.Sleep(_cpuLoadSim); }
-        private void SimulateMemoryPressure()
-        {
-            if (_memoryPressureSim > 0)
-            {
-                byte[] dummyArray;
-                if (_memoryPool != null) { dummyArray = _memoryPool.Acquire(); _memoryPool.Release(dummyArray); }
-                else { dummyArray = new byte[_memoryPressureSim * 1024 * 1024]; }
-                Thread.Sleep(1);
-                // [AJOUT] Mise à jour via MetricCollector
-                _metricCollector.Increment(OrchestratorMetricType.MemoryUsedBytes, dummyArray.Length);
-                _memoryUsageTracker.ReportAllocation("SimulatedPressure", dummyArray.Length);
-            }
-        }
-        private void SimulateThreadingLoad()
-        {
-            if (_threadingLoadSim > 0)
-            {
-                for (int i = 0; i < _threadingLoadSim; i++)
-                    ThreadPool.QueueUserWorkItem(_ => { Thread.Sleep(1); });
-                // [AJOUT] Mise à jour via MetricCollector
-                _metricCollector.Increment(OrchestratorMetricType.ThreadingTasksQueued, _threadingLoadSim);
-            }
-        }
+        // SimulateCPULoad : version fusionnee dans AnimationEngineStub.cs
+        // SimulateMemoryPressure : version fusionnee dans AnimationEngineStub.cs
+        // SimulateThreadingLoad : version fusionnee dans AnimationEngineStub.cs
 
         #endregion
 
         #region Watchdog & Health Check (Security.cs)
 
-        private void WatchdogCallback(object state)
-        {
-            lock (_watchdogLock)
-            {
-                if (_state == AnimationEngineState.Updating)
-                {
-                    LogCall("WATCHDOG: Engine appears stuck in Updating state!");
-                    _state = AnimationEngineState.Ready;
-                    _isStable = false;
-                }
-            }
-        }
+        // WatchdogCallback : version fusionnee dans AnimationEngineStub.cs
 
-        public AnimationEngineStub EnableWatchdog(int intervalMs = 5000) { _stateWatchdogTimer.Change(intervalMs, intervalMs); LogCall($"EnableWatchdog({intervalMs}ms)"); return this; }
-        public AnimationEngineStub DisableWatchdog() { _stateWatchdogTimer.Change(Timeout.Infinite, Timeout.Infinite); LogCall("DisableWatchdog"); return this; }
-        public bool IsHealthy() => _state == AnimationEngineState.Ready || _state == AnimationEngineState.Suspended;
+        // EnableWatchdog : version fusionnee dans AnimationEngineStub.cs
+        // DisableWatchdog : version fusionnee dans AnimationEngineStub.cs
+        // IsHealthy : version complete conservee dans AnimationEngineStub.cs
 
         #endregion
 
@@ -722,7 +471,7 @@ namespace Engine.Animation
 
         #region Helpers (Core)
 
-        private string GenerateChecksum(string path) => "CHK_" + path.GetHashCode().ToString("X8");
+        // GenerateChecksum : version complete conservee dans AnimationEngineStub.cs
 
         #endregion
     }

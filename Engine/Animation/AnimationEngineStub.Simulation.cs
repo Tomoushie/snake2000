@@ -70,21 +70,10 @@ namespace Engine.Animation
         #region Simulation & Testing
 
         // Ajoute un DegradedMode (désactive certains sous‑systèmes pour tester la robustesse).
-        public AnimationEngineStub SetDegradedMode(bool enabled)
-        {
-            _degradedMode = enabled;
-            LogCall($"SetDegradedMode({enabled})");
-            return this;
-        }
+        // SetDegradedMode : version fusionnee dans AnimationEngineStub.cs
 
         // Ajoute un StressProfile struct pour configurer la charge CPU/GPU.
-        public AnimationEngineStub SetStressProfile(StressProfile profile)
-        {
-            _stressProfile = profile;
-            _stressTestManager.SetProfile(profile); // Mettre à jour le gestionnaire de stress
-            LogCall($"SetStressProfile(CPU:{profile.CpuLoadPercent}%, Mem:{profile.MemoryPressureMB}MB, Threads:{profile.ThreadingLoadTasks})");
-            return this;
-        }
+        // SetStressProfile : version fusionnee dans AnimationEngineStub.cs
 
         #endregion
     }

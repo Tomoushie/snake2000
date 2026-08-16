@@ -93,10 +93,7 @@ namespace Engine.Animation
 
         #region Metrics & Dashboard Integration
 
-        public AnimationEngineMetrics GetMetrics()
-        {
-            return _metricCollector.GetSnapshot();
-        }
+        // GetMetrics : version fusionnee dans AnimationEngineStub.cs
 
         // [AJOUT] Méthodes pour les idées 398-597
         public AnimationEngineStub RecordTelemetryEvent(TelemetryEvent evt)

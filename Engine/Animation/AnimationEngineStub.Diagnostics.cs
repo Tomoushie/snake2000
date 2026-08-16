@@ -107,47 +107,10 @@ namespace Engine.Animation
         #region Diagnostics & Instrumentation
 
         // Expose un DumpState() pour exporter l’état complet du stub (utile pour tests unitaires).
-        public string DumpState()
-        {
-            var sb = new System.Text.StringBuilder();
-            sb.AppendLine("--- AnimationEngineStub State Dump ---");
-            sb.AppendLine($"State: {_state}");
-            sb.AppendLine($"SimulationMode: {_simulationMode}");
-            sb.AppendLine($"Loaded Clips Count: {_loadedClipsDict.Count}");
-            sb.AppendLine($"Active Animations Count: {_activeAnimations.Count}");
-            sb.AppendLine($"Current Poses Count: {_currentPoses.Count}");
-            sb.AppendLine("--- Metrics ---");
-            foreach (var kvp in _metrics)
-            {
-                sb.AppendLine($"{kvp.Key}: {kvp.Value}");
-            }
-            sb.AppendLine("--- Call Log (Last 10) ---");
-            var log = CallLog;
-            for (int i = Math.Max(0, log.Count - 10); i < log.Count; i++)
-            {
-                sb.AppendLine(log[i]);
-            }
-            sb.AppendLine("--- Trace Buffer ---");
-            foreach (var traceEvent in _diagnosticsManager.GetRecentEvents())
-            {
-                sb.AppendLine($"[{traceEvent.Timestamp:HH:mm:ss.fff}] {traceEvent.Message} (State: {traceEvent.State})");
-            }
-            return sb.ToString();
-        }
+        // DumpState : version fusionnee dans AnimationEngineStub.cs
 
         // Ajoute un ValidatePose() pour vérifier la cohérence des données avant rendu.
-        private void ValidatePose(AnimationPose pose)
-        {
-            if (_enableValidation)
-            {
-                foreach (var bone in pose.Bones)
-                {
-                    // Exemple de validation simple
-                    Assert(!float.IsNaN(bone.Value.Position.X), $"Invalid X in bone {bone.Key}");
-                    Assert(!float.IsInfinity(bone.Value.Position.X), $"Invalid X in bone {bone.Key}");
-                }
-            }
-        }
+        // ValidatePose : version fusionnee dans AnimationEngineStub.cs
 
         #endregion
     }

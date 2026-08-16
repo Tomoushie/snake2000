@@ -205,47 +205,47 @@ namespace Engine.Animation
         #region Fields (Core)
 
         // --- État interne ---
-        private AnimationEngineState _state = AnimationEngineState.Uninitialized;
-        private readonly object _stateLock = new object();
-        private StubSimulationMode _simulationMode = StubSimulationMode.Normal;
-        private AnimationQualityLevel _qualityLevel = AnimationQualityLevel.High;
-        private AnimationUpdateMode _updateMode = AnimationUpdateMode.Sequential;
+        // _state : declare dans un fichier partiel d'AnimationEngineStub.
+        // _stateLock : declare dans un fichier partiel d'AnimationEngineStub.
+        // _simulationMode : declare dans un fichier partiel d'AnimationEngineStub.
+        // _qualityLevel : declare dans un fichier partiel d'AnimationEngineStub.
+        // _updateMode : declare dans un fichier partiel d'AnimationEngineStub.
         // A. Optimisation et structure : Utilisation de ConcurrentBag pour les clips chargés (exemple)
-        private readonly ConcurrentBag<AnimationClip> _loadedClipsBag = new ConcurrentBag<AnimationClip>();
-        private readonly Dictionary<string, AnimationClip> _loadedClipsDict = new Dictionary<string, AnimationClip>();
-        private readonly Dictionary<string, AnimationPose> _currentPoses = new Dictionary<string, AnimationPose>();
-        private readonly List<string> _activeAnimations = new List<string>();
-        private readonly Random _random = new Random();
-        private readonly Timer _stateWatchdogTimer; // Pour détecter les blocages
+        // _loadedClipsBag : declare dans un fichier partiel d'AnimationEngineStub.
+        // _loadedClipsDict : declare dans un fichier partiel d'AnimationEngineStub.
+        // _currentPoses : declare dans un fichier partiel d'AnimationEngineStub.
+        // _activeAnimations : declare dans un fichier partiel d'AnimationEngineStub.
+        // _random : declare dans un fichier partiel d'AnimationEngineStub.
+        // _stateWatchdogTimer : declare dans un fichier partiel d'AnimationEngineStub.
         // A. Optimisation et structure : Utilisation de ConcurrentBag pour les logs (thread-safe)
-        private readonly ConcurrentBag<string> _callLog = new ConcurrentBag<string>();
-        private bool _enableCallLogging = false;
-        private bool _enableAssertions = true;
-        private bool _enableSnapshots = false;
-        private bool _enableReplay = false;
-        private bool _enableFaultInjection = false;
-        private bool _enableValidation = false;
-        private bool _enablePerformanceSim = false;
-        private bool _enableMemoryPressureSim = false;
-        private bool _enableThreadingSim = false;
-        private bool _enableHooks = false;
+        // _callLog : declare dans un fichier partiel d'AnimationEngineStub.
+        // _enableCallLogging : declare dans un fichier partiel d'AnimationEngineStub.
+        // _enableAssertions : declare dans un fichier partiel d'AnimationEngineStub.
+        // _enableSnapshots : declare dans un fichier partiel d'AnimationEngineStub.
+        // _enableReplay : declare dans un fichier partiel d'AnimationEngineStub.
+        // _enableFaultInjection : declare dans un fichier partiel d'AnimationEngineStub.
+        // _enableValidation : declare dans un fichier partiel d'AnimationEngineStub.
+        // _enablePerformanceSim : declare dans un fichier partiel d'AnimationEngineStub.
+        // _enableMemoryPressureSim : declare dans un fichier partiel d'AnimationEngineStub.
+        // _enableThreadingSim : declare dans un fichier partiel d'AnimationEngineStub.
+        // _enableHooks : declare dans un fichier partiel d'AnimationEngineStub.
 
         // --- Dépendances Injectées ---
-        private EventBus _eventBus;
-        private Profiler _profiler;
-        private IJobSystem _jobSystem;
-        private ResourceManager _resourceManager;
-        private IRenderEngine _renderEngine; // Pour le hook de rendu
-        private IPhysicsEngine _physicsEngine; // Pour le hook de physique
+        // _eventBus : declare dans un fichier partiel d'AnimationEngineStub.
+        // _profiler : declare dans un fichier partiel d'AnimationEngineStub.
+        // _jobSystem : declare dans un fichier partiel d'AnimationEngineStub.
+        // _resourceManager : declare dans un fichier partiel d'AnimationEngineStub.
+        // _renderEngine : declare dans un fichier partiel d'AnimationEngineStub.
+        // _physicsEngine : declare dans un fichier partiel d'AnimationEngineStub.
 
         // --- Configurations ---
-        private AnimationEngineConfig _config;
-        private AnimationEngineStubConfig _stubConfig;
+        // _config : declare dans un fichier partiel d'AnimationEngineStub.
+        // _stubConfig : declare dans un fichier partiel d'AnimationEngineStub.
 
         // --- Variables de simulation ---
-        private int _cpuLoadSim = 0;
-        private int _memoryPressureSim = 0;
-        private int _threadingLoadSim = 0;
+        // _cpuLoadSim : declare dans un fichier partiel d'AnimationEngineStub.
+        // _memoryPressureSim : declare dans un fichier partiel d'AnimationEngineStub.
+        // _threadingLoadSim : declare dans un fichier partiel d'AnimationEngineStub.
 
         // --- Métriques internes ---
         private readonly Dictionary<OrchestratorMetricType, float> _metrics = new Dictionary<OrchestratorMetricType, float>();
@@ -264,35 +264,35 @@ namespace Engine.Animation
         // private readonly AnimationMemoryUsageTracker _memoryUsageTracker = new AnimationMemoryUsageTracker(...);
 
         // --- Sous-systèmes (implémentés comme classes internes pour modularité) ---
-        private readonly SubsystemRegistry _subsystemRegistry = new SubsystemRegistry();
-        private readonly SubsystemLifecycleManager _lifecycleManager = new SubsystemLifecycleManager();
+        // _subsystemRegistry : declare dans un fichier partiel d'AnimationEngineStub.
+        // _lifecycleManager : declare dans un fichier partiel d'AnimationEngineStub.
         private readonly SubsystemHealthMonitor _healthMonitor = new SubsystemHealthMonitor();
         private readonly SubsystemProfiler _subsystemProfiler = new SubsystemProfiler();
-        private AnimationBlendTreeSystem _blendTreeSystem;
-        private AnimationStateMachineSystem _stateMachineSystem;
-        private AnimationInverseKinematicsSystem _ikSystem;
-        private AnimationProceduralSystem _proceduralSystem;
-        private AnimationCompressionSystem _compressionSystem;
+        // _blendTreeSystem : declare dans un fichier partiel d'AnimationEngineStub.
+        // _stateMachineSystem : declare dans un fichier partiel d'AnimationEngineStub.
+        // _ikSystem : declare dans un fichier partiel d'AnimationEngineStub.
+        // _proceduralSystem : declare dans un fichier partiel d'AnimationEngineStub.
+        // _compressionSystem : declare dans un fichier partiel d'AnimationEngineStub.
 
         // --- Plugins (H. Extensibilité) ---
-        private readonly List<IAnimationPlugin> _plugins = new List<IAnimationPlugin>();
-        private VersionInfo _version = VersionInfo.Default;
+        // _plugins : declare dans un fichier partiel d'AnimationEngineStub.
+        // _version : declare dans un fichier partiel d'AnimationEngineStub.
 
         // --- K. Architecture avancée ---
-        private readonly SubsystemHotSwapManager _hotSwapManager = new SubsystemHotSwapManager();
-        private readonly SubsystemSandbox _sandbox = new SubsystemSandbox();
-        private readonly SubsystemAuditTrail _auditTrail = new SubsystemAuditTrail();
-        private readonly SubsystemRollback _rollbackManager = new SubsystemRollback();
-        private readonly SubsystemStateSerializer _stateSerializer = new SubsystemStateSerializer();
-        private readonly SubsystemStateDeserializer _stateDeserializer = new SubsystemStateDeserializer();
-        private readonly SubsystemEventRecorder _eventRecorder = new SubsystemEventRecorder();
-        private readonly SubsystemEventPlayer _eventPlayer = new SubsystemEventPlayer();
+        // _hotSwapManager : declare dans un fichier partiel d'AnimationEngineStub.
+        // _sandbox : declare dans un fichier partiel d'AnimationEngineStub.
+        // _auditTrail : declare dans un fichier partiel d'AnimationEngineStub.
+        // _rollbackManager : declare dans un fichier partiel d'AnimationEngineStub.
+        // _stateSerializer : declare dans un fichier partiel d'AnimationEngineStub.
+        // _stateDeserializer : declare dans un fichier partiel d'AnimationEngineStub.
+        // _eventRecorder : declare dans un fichier partiel d'AnimationEngineStub.
+        // _eventPlayer : declare dans un fichier partiel d'AnimationEngineStub.
 
         // --- G. Sécurité et stabilité ---
-        private bool _safeMode = false;
-        private readonly object _watchdogLock = new object();
-        private bool _isStable = true;
-        private readonly AnimationWatchdog _animationWatchdog = new AnimationWatchdog();
+        // _safeMode : declare dans un fichier partiel d'AnimationEngineStub.
+        // _watchdogLock : declare dans un fichier partiel d'AnimationEngineStub.
+        // _isStable : declare dans un fichier partiel d'AnimationEngineStub.
+        // _animationWatchdog : declare dans un fichier partiel d'AnimationEngineStub.
 
         // --- [AJOUT] Managers pour idées 398-597 ---
         private readonly AnimationPluginHost _pluginHost = new AnimationPluginHost();
@@ -602,6 +602,8 @@ namespace Engine.Animation
                     _telemetryCollector.RecordEvent(new TelemetryEvent("AssetLoaded", new Dictionary<string, object>{{"Name", clipName}, {"Path", path}}, DateTime.UtcNow));
                 }
             }
+            _metricCollector.Increment(OrchestratorMetricType.CompressedClipsLoaded, 1);
+            _metricCollector.Increment(OrchestratorMetricType.AssetsLoaded, 1);
             return this;
         }
 
@@ -624,6 +626,8 @@ namespace Engine.Animation
                      _telemetryCollector.RecordEvent(new TelemetryEvent("AssetUnloaded", new Dictionary<string, object>{{"Name", clipName}}, DateTime.UtcNow));
                  }
             }
+            _metricCollector.Increment(OrchestratorMetricType.CompressedClipsLoaded, -1);
+            _metricCollector.Increment(OrchestratorMetricType.AssetsUnloaded, 1);
             return this;
         }
 
@@ -648,6 +652,7 @@ namespace Engine.Animation
                     _telemetryCollector.RecordEvent(new TelemetryEvent("AnimationPlayed", new Dictionary<string, object>{{"Entity", entityName}, {"Clip", clipName}}, DateTime.UtcNow));
                 }
             }
+            _metricCollector.Increment(OrchestratorMetricType.ActivePlaybacks, 1);
             return this;
         }
 
@@ -666,6 +671,7 @@ namespace Engine.Animation
                     _telemetryCollector.RecordEvent(new TelemetryEvent("AnimationStopped", new Dictionary<string, object>{{"Entity", entityName}, {"Clip", clipName}}, DateTime.UtcNow));
                 }
             }
+            _metricCollector.Increment(OrchestratorMetricType.ActivePlaybacks, -1);
             return this;
         }
 
@@ -682,6 +688,12 @@ namespace Engine.Animation
                 _metrics[OrchestratorMetricType.BlendsCalculated] = 0;
                 _metrics[OrchestratorMetricType.IKIterations] = 0;
                 _metrics[OrchestratorMetricType.ProceduralUpdates] = 0;
+
+                // Meme remise a zero cote MetricCollector, qui alimente les snapshots.
+                _metricCollector.SetValue(OrchestratorMetricType.TotalBonesAnimated, 0);
+                _metricCollector.SetValue(OrchestratorMetricType.BlendsCalculated, 0);
+                _metricCollector.SetValue(OrchestratorMetricType.IKIterations, 0);
+                _metricCollector.SetValue(OrchestratorMetricType.ProceduralUpdates, 0);
 
                 var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
@@ -791,8 +803,24 @@ namespace Engine.Animation
                      _metrics[OrchestratorMetricType.WarningCount]++;
                 }
 
+                // Mise a jour des sous-systemes par le registre, chacun chronometre.
+                var blendSys = _subsystemRegistry.Get<AnimationBlendTreeSystem>();
+                var stateSys = _subsystemRegistry.Get<AnimationStateMachineSystem>();
+                var ikSys = _subsystemRegistry.Get<AnimationInverseKinematicsSystem>();
+                var procSys = _subsystemRegistry.Get<AnimationProceduralSystem>();
+                var compSys = _subsystemRegistry.Get<AnimationCompressionSystem>();
+
+                if (blendSys != null) { var sw = System.Diagnostics.Stopwatch.StartNew(); blendSys.Update(deltaTime); sw.Stop(); _subsystemProfiler.RecordTime(SubsystemType.BlendTree, (float)sw.ElapsedMilliseconds); _metricCollector.Increment(OrchestratorMetricType.BlendsCalculated, 1); }
+                if (stateSys != null) { var sw = System.Diagnostics.Stopwatch.StartNew(); stateSys.Update(deltaTime); sw.Stop(); _subsystemProfiler.RecordTime(SubsystemType.StateMachine, (float)sw.ElapsedMilliseconds); _metricCollector.Increment(OrchestratorMetricType.ActivePlaybacks, 1); }
+                if (ikSys != null) { var sw = System.Diagnostics.Stopwatch.StartNew(); ikSys.Update(deltaTime); sw.Stop(); _subsystemProfiler.RecordTime(SubsystemType.InverseKinematics, (float)sw.ElapsedMilliseconds); _metricCollector.Increment(OrchestratorMetricType.IKIterations, 1); }
+                if (procSys != null) { var sw = System.Diagnostics.Stopwatch.StartNew(); procSys.Update(deltaTime); sw.Stop(); _subsystemProfiler.RecordTime(SubsystemType.Procedural, (float)sw.ElapsedMilliseconds); _metricCollector.Increment(OrchestratorMetricType.ProceduralUpdates, 1); }
+                if (compSys != null) { var sw = System.Diagnostics.Stopwatch.StartNew(); compSys.Update(deltaTime); sw.Stop(); _subsystemProfiler.RecordTime(SubsystemType.Compression, (float)sw.ElapsedMilliseconds); _metricCollector.Increment(OrchestratorMetricType.CompressedClipsLoaded, 1); }
+
                 stopwatch.Stop();
                 _metrics[OrchestratorMetricType.CpuUpdateMs] = (float)stopwatch.ElapsedMilliseconds;
+                _metricCollector.SetValue(OrchestratorMetricType.CpuUpdateMs, (float)stopwatch.ElapsedMilliseconds);
+                _metricCollector.Increment(OrchestratorMetricType.TelemetryEvents, 1);
+                _snapshotHistory.RecordSnapshot(_metricCollector.GetSnapshot());
 
                 // C. Performance et threading : Stocker le temps de frame
                 lock (_perfLock)
@@ -861,6 +889,7 @@ namespace Engine.Animation
                 return pose;
             }
             LogCall($"GetAnimationPose({entityName}) - Not Found");
+            _metricCollector.Increment(OrchestratorMetricType.RenderedPoses, 1);
             return new AnimationPose(new Dictionary<string, Transform>(), 0, new AnimationClip()); // Retourne une pose vide ou une pose par défaut
         }
 
@@ -917,10 +946,10 @@ namespace Engine.Animation
         // Ces méthodes sont des points d'entrée pour interagir avec les sous-systèmes.
         // Elles peuvent être appelées par d'autres systèmes ou par l'orchestrateur.
 
-        public AnimationEngineStub ApplyBlendTree(string entityName, string treeName) { LogCall($"ApplyBlendTree({entityName}, {treeName})"); _metrics[OrchestratorMetricType.BlendsCalculated]++; return this; }
+        // LogCall : version instrumentee conservee dans le fichier partiel
         public AnimationEngineStub SetAnimationState(string entityName, string stateName) { LogCall($"SetAnimationState({entityName}, {stateName})"); return this; }
-        public AnimationEngineStub SolveIK(string entityName, string chainName, Vector3 target) { LogCall($"SolveIK({entityName}, {chainName}, {target})"); _metrics[OrchestratorMetricType.IKIterations]++; return this; }
-        public AnimationEngineStub UpdateProcedural(string entityName, string procAnimName) { LogCall($"UpdateProcedural({entityName}, {procAnimName})"); _metrics[OrchestratorMetricType.ProceduralUpdates]++; return this; }
+        // SolveIK : version instrumentee conservee dans le fichier partiel
+        // UpdateProcedural : version instrumentee conservee dans le fichier partiel
         public AnimationEngineStub DecompressAnimation(AnimationClip clip) { LogCall($"DecompressAnimation({clip.Name})"); return this; }
 
         #endregion
@@ -969,6 +998,7 @@ namespace Engine.Animation
             if (_enableCallLogging)
             {
                 _callLog.Add($"[{DateTime.Now:HH:mm:ss.fff}] {callDescription}");
+                _metricCollector.Increment(OrchestratorMetricType.TelemetryEvents, 1);
                 // B. Diagnostic et instrumentation : Ajouter au trace buffer
                 _diagnosticsManager.Log(new TraceEvent(callDescription, DateTime.UtcNow, _state, null));
                 // K. Architecture avancée : Enregistrer l'événement
@@ -1097,6 +1127,7 @@ namespace Engine.Animation
                 Thread.Sleep(1); // Laisser un peu de temps pour que le GC agisse
                 _metrics[OrchestratorMetricType.MemoryUsedBytes] += dummyArray.Length;
                 _memoryUsageTracker.ReportAllocation("SimulatedPressure", dummyArray.Length);
+            _metricCollector.Increment(OrchestratorMetricType.MemoryUsedBytes, dummyArray.Length);
             }
         }
 
@@ -1110,6 +1141,7 @@ namespace Engine.Animation
                     ThreadPool.QueueUserWorkItem(_ => { Thread.Sleep(1); });
                 }
                 _metrics[OrchestratorMetricType.ThreadingTasksQueued] += _threadingLoadSim;
+            _metricCollector.Increment(OrchestratorMetricType.ThreadingTasksQueued, _threadingLoadSim);
             }
         }
 
@@ -1130,6 +1162,7 @@ namespace Engine.Animation
                     _state = AnimationEngineState.Ready;
                     _isStable = false; // Marquer comme instable
                 }
+            _isStable = false;
             }
         }
 
@@ -1375,8 +1408,8 @@ namespace Engine.Animation
         public AnimationEngineStub RepairAsset(AssetInfo info) { _integrityChecker.RepairAsset(info); return this; }
 
         // Telemetry
-        public AnimationEngineStub RecordTelemetryEvent(TelemetryEvent evt) { _telemetryCollector.RecordEvent(evt); return this; }
-        public AnimationEngineStub FlushTelemetry() { _telemetryCollector.Flush(); return this; }
+        // RecordTelemetryEvent : version instrumentee conservee dans le fichier partiel
+        // FlushTelemetry : version instrumentee conservee dans le fichier partiel
 
         // Chaos
         public AnimationEngineStub InjectChaos(ChaosEvent chaosEvent) { _chaosMonkey.InjectChaos(chaosEvent); return this; }

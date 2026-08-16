@@ -315,6 +315,9 @@ public struct AISensorComponent : IComponent, IReusableComponent
 
 public struct EnvironmentState
 {
+    // Requis des lors que le struct porte des initialiseurs de champ (CS8983).
+    public EnvironmentState() { }
+
     public bool IsInDarkness { get; set; } = false;
     public bool IsInFog { get; set; } = false;
     public bool IsInRain { get; set; } = false;
@@ -757,6 +760,9 @@ public struct AIMemoryComponent : IComponent, IReusableComponent
 // Composant Mémoire Collective (ajouté)
 public struct AISharedMemoryComponent : IComponent, IReusableComponent
 {
+    // Requis des lors que le struct porte des initialiseurs de champ (CS8983).
+    public AISharedMemoryComponent() { }
+
     public Dictionary<int, TimedMemoryEntry> SharedPositions { get; set; } = new(); // Clé = Entity.ID de l'allié qui a partagé
     public Dictionary<int, int> SharedTargets { get; set; } = new(); // Clé = Entity.ID de l'allié, Valeur = ID de la cible partagée
     // Ajouté : SharedLearnedPatterns (3. Apprentissage collectif)
@@ -1240,6 +1246,9 @@ public enum FormationType
 // Composant pour la réflexion cognitive (1. Méta-raisonnement)
 public struct AICognitiveReflectionComponent : IComponent, IReusableComponent
 {
+    // Requis des lors que le struct porte des initialiseurs de champ (CS8983).
+    public AICognitiveReflectionComponent() { }
+
     public Dictionary<string, float> DecisionQualityScores { get; set; } = new(); // Clé = nom de la décision, Valeur = score de qualité
     public float OverallCognitiveEfficiency { get; set; } = 1.0f; // Efficacité globale
 
@@ -1266,6 +1275,9 @@ public struct AICognitiveReflectionComponent : IComponent, IReusableComponent
 // Composant pour la communication (2. Langage IA simplifié, 3. Système de négociation, 4. Communication émotionnelle, 5. Canal de commandement)
 public struct AICommunicationChannelComponent : IComponent, IReusableComponent
 {
+    // Requis des lors que le struct porte des initialiseurs de champ (CS8983).
+    public AICommunicationChannelComponent() { }
+
     public AIFaction ChannelFaction { get; set; } // Sur quel canal la communication est-elle autorisée
     public List<AICommunicationMessage> ReceivedMessages { get; set; } = new(); // Messages reçus
     public List<AICommunicationMessage> SentMessages { get; set; } = new(); // Messages envoyés
@@ -1331,6 +1343,9 @@ public enum AICommunicationType
 // Composant pour la négociation (3. Système de négociation)
 public struct AINegotiationComponent : IComponent, IReusableComponent
 {
+    // Requis des lors que le struct porte des initialiseurs de champ (CS8983).
+    public AINegotiationComponent() { }
+
     public Dictionary<Entity, float> TrustRating { get; set; } = new(); // Clé = Entité alliée, Valeur = Niveau de confiance
     public List<AINegotiationOffer> PendingOffers { get; set; } = new(); // Offres en attente
 

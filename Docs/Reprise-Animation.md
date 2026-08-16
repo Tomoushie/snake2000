@@ -31,7 +31,7 @@ des types absents. En retirer **un seul** laissait 1 à 2 erreurs. En retirer
 | ce qu'on mesure | erreurs |
 |---|---|
 | le dépôt (`dotnet build Tools/Build-complet.csproj`) | **38** |
-| … avec `-p:SansStub=true` | **536 distinctes** (593 avant le lot GPU) |
+| … avec `-p:SansStub=true` | **466 distinctes** (593 en début de journée) |
 
 **Deux erreurs de mesure commises le 17 août, à ne pas refaire :**
 
@@ -44,16 +44,26 @@ des types absents. En retirer **un seul** laissait 1 à 2 erreurs. En retirer
   internes à une classe ne sont pas qualifiés. `GetMetricsSnapshot` semblait
   sans appelant ; il en avait onze.
 
-Les 536 : 159 `CS1061` (membre inexistant), 152 `CS0103` (nom inexistant),
-53 `CS0117`, 24 `CS1729` (constructeur absent). Par fichier :
-`ThreadAffinityManager` **79**, le bridge **68**,
-`AnimationEngineStubOrchestrator` **67**, `AnimationEngineStub` **54**,
-`IAudioEngine` **51**, `AnimationEngineStub.Index` **48**, `SnakeAI` **42**,
+Les 466 : 149 `CS0103` (nom inexistant), 121 `CS1061` (membre inexistant),
+30 `CS0311`, 24 `CS1729` (constructeur absent). Par fichier :
+`AnimationEngineStubOrchestrator` **67**, le bridge **61**,
+`AnimationEngineStub` **54**, `IAudioEngine` **51**, `.Index` **48**,
+`SnakeAI` **42**, `ThreadAffinityManager` **34** (79 avant),
 `GPUProfilerHook` **34** (93 avant).
 
-Les messages qui reviennent le plus disent où creuser : `'Vector2' ne contient
-pas de définition pour 'Zero'` (13), `le nom '_mixerLock' n'existe pas` (13),
-`AnimationEngineStubFactory n'existe pas` (12).
+### La méthode qui marche sur ces erreurs-là
+
+**Le compilateur donne le contrat.** Un `CS1061` nomme le type ET le membre
+manquant ; le site d'appel donne les types des paramètres. Extraire ça
+mécaniquement produit un brief exact — c'est ainsi que les onze coquilles vides
+d'affinité ont été remplies, et que `Vector2` a retrouvé `Zero`, `Dot`,
+`Length`, `Normalized`.
+
+```bash
+dotnet build Tools/Build-complet.csproj -v q --nologo -p:SansStub=true
+```
+
+puis regrouper les `CS1061` par type porteur : chaque groupe est un lot.
 
 **`Tools/Build-complet.csproj` existe pour ça** : il compile tout le dépôt —
 `Snake2000.cs`, `Engine`, `Game`, `AI`, `Systems` — là où

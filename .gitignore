@@ -12,3 +12,11 @@ obj/
 .vscode/
 .continue/
 *.csproj.user
+
+# Sorties du diagnostic : regenerees a chaque `python Tools/diagnostic.py`,
+# elles salissaient `git status` apres chaque mesure.
+Tools/diag.rsp
+Tools/diag_erreurs.txt
+
+# Historique local de l editeur.
+.history/

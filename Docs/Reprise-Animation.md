@@ -260,10 +260,24 @@ qui ne soit un choix assumé. La suite n'est plus de l'assainissement :
 1. **Décider ce que devient `DummyAnimationEngine`** — 2 597 lignes que rien ne
    référence, 38 erreurs assumées. Le stub a été conservé pour des tests qui
    n'existent pas encore. S'ils n'arrivent pas, il rejoint `Docs/Intention/`.
-2. **Unifier les espaces de noms** — `Snake2000.Engine.*` contre `Engine.*`.
-   Deux `IJob`, deux `Vector2`, deux `Vector3` coexistent et sont qualifiés à la
-   main dans les fichiers qui importent les deux côtés. C'est le dernier
-   chantier structurel, et il est enfin ouvrable.
+2. **Unifier les espaces de noms — c'est devenu le chantier bloquant du pont.**
+   Mesuré le 17 août : ses 55 erreurs restantes ne sont plus des membres
+   manquants mais un désaccord de racine. Le code écrit
+   `Movement.State.StaminaStateMachine`, `Movement.AudioVisual.MovementAudioMixer`,
+   `Movement.Debug.MovementDebugOverlaySystem` — et les types sont déclarés sous
+   `Game.Gameplay.Movement.*`, avec `Debugging` là où le code écrit `Debug`.
+
+   **Ne pas coller des `global::` un par un** : ça compilerait et figerait
+   l'incohérence. Il faut choisir une racine et s'y tenir. Le reste des 55 en
+   dépend : les `CS1729` (constructeurs absents) portent sur des classes que
+   j'ai générées sous la mauvaise racine, et les `CS0029` sur `Vector2` viennent
+   du même désordre — `Snake2000.Engine.Core.Vector2` contre
+   `System.Numerics.Vector2`, deux `IJob`, deux `Vector3`.
+
+   Trois autres systèmes n'existent nulle part, quelle que soit la racine :
+   `ProceduralFootPlacementSystem`, `MovementAudioMixer`, `SurfaceReactionSystem`.
+   Leurs constructeurs sont relevés — tous prennent `EntityManager`, deux
+   prennent en plus `NavMesh` ou `PhysicsSystem`.
 3. **`AI/` et `Systems/`, jamais mesurés — et il y a du vrai travail dedans.**
    `python Tools/diagnostic.py AI Systems` rend **0 fichier retenu** : aucun ne
    passe la validation. Mais les deux dossiers ne se ressemblent pas.

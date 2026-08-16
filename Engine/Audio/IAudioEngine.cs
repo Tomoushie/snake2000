@@ -8,11 +8,22 @@ using System.Runtime.CompilerServices;
 using System.Collections.Concurrent;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Engine.Events;
+using System.Numerics;          // Vector3
 using Engine.Profiling;
 using Engine.Jobsystem;
-using Engine.Utilities;
-using Engine.Mathematics; // [CORRECTION A.1] : Utilisation du Vector3 du moteur
+using Engine.Core;              // IJobSystem
+using Snake2000.Engine.Core;    // EventBus, Profiler, ResourceManager
+
+// `Engine.Events`, `Engine.Utilities` et `Engine.Mathematics` sont partis : ces
+// trois espaces de noms n'existent nulle part dans le depot, ils designaient une
+// organisation prevue et jamais creee. Ils coutaient trois CS0234 et ne
+// resolvaient rien.
+//
+// Vector3 vient donc de System.Numerics et non du moteur : le seul `struct
+// Vector3` du depot est declare dans `Engine.Animation`
+// (AnimationEngineStub.Core.cs:172), et l'audio n'a pas a dependre de
+// l'animation pour un type mathematique. C'est aussi ce que fait deja le
+// contrat reduit de Engine/IAnimationEngine.cs.
 
 namespace Engine.Audio
 {
@@ -428,7 +439,24 @@ namespace Engine.Audio
     #endregion
 
     #region Structures
-    public struct AudioEngineConfig
+    // Le contrat de DuckingRule, releve sur ses deux seuls sites : construit
+    // ligne 1540 avec six membres, relu dans ApplyDuckingRules ligne 1562. Les
+    // types viennent de la signature de EnableDucking (ligne 206).
+    public class DuckingRule
+    {
+        public AudioChannel TargetChannel { get; set; }   // ecrit, lu l.1583
+        public AudioChannel TriggerChannel { get; set; }  // ecrit
+        public float DuckVolume { get; set; }             // ecrit, lu l.1584
+        public float AttackTime { get; set; }             // ecrit
+        public float ReleaseTime { get; set; }            // ecrit
+        public bool IsActive { get; set; }                // ecrit, lu l.1570
+    }
+
+    // `class` et non `struct` : `AudioEngine._config` est lu par Volatile, qui
+    // exige un type reference — d'ou le CS0677. C'est le meme piege que pour
+    // ThreadAffinityManagerConfig, et c'est un progres deguise : il ne peut
+    // apparaitre qu'une fois le type enfin resolu.
+    public class AudioEngineConfig
     {
         public int MaxVoices { get; set; }
         public int SampleRate { get; set; }
@@ -1520,6 +1548,34 @@ namespace Engine.Audio
             _currentBackend?.SetParameter("GlobalPitch", pitch);
         }
 
+        #region Membres du contrat IAudioEngine restes sans implementation
+
+        // Les huit CS0535 du fichier. Les signatures sont recopiees du contrat
+        // (lignes 198-253) ; les corps rendent une valeur neutre plutot qu'une
+        // logique inventee, et le disent. Le jour ou un appelant reel en attend
+        // autre chose, c'est lui qui dictera le comportement.
+
+        public AudioEngineCapabilities GetCapabilities() => default;
+
+        public AudioEngineMetrics GetMetrics() => default;
+
+        public int GetActiveVoiceCount()
+        {
+            lock (_sourcesBulkOpLock) { return _activeSources.Count; }
+        }
+
+        public int GetMaxVoiceCount() => _config?.MaxVoices ?? 0;
+
+        public void SetAmbisonicsOrder(int order) { /* backend absent */ }
+
+        public void SetObstructionEnabled(bool enabled) { /* backend absent */ }
+
+        public void TransitionMusicSegment(string fromSegment, string toSegment, float transitionTime = 1.0f) { /* backend absent */ }
+
+        public void SetStreamingBandwidthLimit(float limitKBps) { /* backend absent */ }
+
+        #endregion
+
         public void EnableDucking(AudioChannel target, AudioChannel trigger, float duckVolume, float attackTime, float releaseTime)
         {
             if (_disposed) return;
@@ -2243,7 +2299,10 @@ namespace Engine.Audio
         public void Dispose() { Shutdown(); }
     }
 
-    internal interface IAudioVoice { /* Minimal handle for playing clips */ } // Placeholder for backend voice management
+    // `public` et non `internal` : IAudioBackend.PlayClip la rend publiquement
+    // (ligne 329), et un type de retour moins accessible que sa methode est le
+    // CS0050. C'est la declaration qui etait en retard sur son usage.
+    public interface IAudioVoice { /* Minimal handle for playing clips */ } // Placeholder for backend voice management
 
     // Placeholder DSP implementations
     internal class ParametricEqualizerDSP : IAudioDSP { public string Name => "ParametricEQ"; public void Process(float[] samples, int channels, int sampleRate) { /* Placeholder */ } public void SetParameter(string paramName, object value) { } public object GetParameter(string paramName) => null; }

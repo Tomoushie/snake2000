@@ -12,21 +12,19 @@ Mesuré avec `python Tools/diagnostic.py Engine Game` :
 |---|---|---|
 | 15 août | 71 | 1 629 |
 | après la session « IAnimationEngine » | 77 | 509 |
-| **maintenant** | **77** | **345** |
+| **maintenant** | **79** | **111** |
 
-`Engine/Jobsystem/` est **entièrement propre**, et **`CS0102` a disparu du dépôt**.
+`Engine/Jobsystem/`, `Engine/Audio/`, le **bridge** et l'orchestrateur de tests
+sont propres. **`CS0102`, `CS0535` et `CS0050` ont disparu du dépôt entier.**
 
 | fichier | erreurs | nature |
 |---|---|---|
-| `Game/…/MovementAnimationBridgeSystem.cs` | 97 | types absents |
-| `Engine/Audio/IAudioEngine.cs` | 87 | jamais examiné |
-| `Engine/Animation/Tests/AnimationEngineStubOrchestrator.cs` | 51 | jamais examiné |
-| `Engine/Animation/DummyAnimationEngine.cs` | 43 | **uniquement** des types absents |
-| `Engine/Animation/AnimationEngineStub.cs` + `.Core.cs` | 53 | types absents |
-| `Engine/Profiling/GPUProfilerHook.cs` | 12 | types absents |
+| `Engine/Animation/DummyAnimationEngine.cs` | 38 | huit types laissés absents **délibérément** |
+| `Engine/Animation/AnimationEngineStub.cs` + `.Core.cs` + `.Index.cs` | 57 | jamais examiné |
+| `Engine/Profiling/GPUProfilerHook.cs` | 12 | jamais examiné |
+| quatre fichiers à 1 ou 2 erreurs | 5 | résidus nommés |
 
-Par code : `CS0246` × 309, puis `CS0102` × 82 — les 82 du bridge — et
-`CS0234` × 18.
+Par code : `CS0246` × 89, `CS0234` × 12, `CS0539` × 9, `CS0677` × 1.
 
 ## La règle qui a tranché trois fois
 
@@ -191,14 +189,25 @@ et comparer « fichiers retenus » au nombre de `.cs` non vides.
 
 ## Ce qui reste à faire, par ordre de rendement
 
-1. **Le bridge, 97** — il n'y reste que des `CS0246`. Les 82 `CS0102` sont
-   partis avec les 1 509 champs `*Knowledge` de `struct MovementComponent`,
-   déclarés et jamais lus (archive dans
-   `Docs/Intention/MovementComponent-Knowledge.cs.txt`). Ce n'était pas un
-   découpage : il n'y avait rien en face. **Se méfier du mot « dupliqué » dans
-   un diagnostic** — il peut désigner deux versions à fusionner, comme pour
-   `AnimationEngineStub`, ou les collisions internes d'un remplissage généré,
-   comme ici. La mesure des appelants distingue les deux en une commande.
+1. **`AnimationEngineStub.cs` + `.Core.cs` + `.Index.cs`, 57** — jamais examinés
+   depuis le découpage. Puis `GPUProfilerHook`, 12. **Commencer par chercher les
+   types dans le dépôt** : c'est ce qui a produit tous les gros gains.
+
+   | fichier | avant | après | coût |
+   |---|---|---|---|
+   | le bridge | 97 | 13 | **14 lignes d'`using`** |
+   | `IAudioEngine` | 87 | 12 | 5 lignes |
+   | `DummyAnimationEngine` | 94 | 74 | 3 lignes |
+
+   Le bridge déclarait ses propres types dans **six espaces de noms
+   différents**, qui ne se voyaient donc pas les uns les autres. Sur 22 types
+   « introuvables », 21 existaient — plusieurs dans le fichier lui-même.
+
+   Le mot « dupliqué » d'un diagnostic mérite la même méfiance : les 82 `CS0102`
+   du bridge n'étaient pas deux versions à fusionner comme pour
+   `AnimationEngineStub`, mais les collisions internes de 1 509 champs
+   `*Knowledge` jamais lus (archive dans
+   `Docs/Intention/MovementComponent-Knowledge.cs.txt`).
 2. **`DummyAnimationEngine`, 38 — tranché, et le stub est conservé.** Rien ne
    le référence (2 597 lignes, zéro appelant), mais il est cohérent et servira
    quand des tests arriveront. Des douze types absents, **quatre seulement
@@ -269,6 +278,18 @@ jamais ces types — mais ce sont des repères, pas des types.
 
 **Exiger les membres *lus* autant que ceux affectés à la construction**, et
 donner dans le brief les lignes d'usage qui les montrent.
+
+**Deux lots générés le 16 août ont marché du premier coup, et pour la même
+raison** : les neuf types de `AnimationEngineStubOrchestrator` (51 erreurs → 0,
+onze secondes) et les quatre du bridge. Dans les deux cas le brief énumérait
+chaque membre avec son type, relevé sur son site d'appel — pas une consigne de
+bon goût. Qwen a rendu exactement ce qui était demandé, sans un membre de plus.
+La différence avec les échecs n'est pas le modèle : c'est qu'il y avait un
+contrat à transmettre.
+
+Le brief doit aussi dire ce qu'il ne faut **pas** écrire : `DrawHeatmapPixel`
+apparaît sur `_renderSystem` mais son unique site d'appel est **en
+commentaire**. Elle a été exclue du contrat, et le type est juste.
 
 **Et d'abord : relever AVANT d'écrire le brief.** C'est ce relevé qui a arrêté
 le lot des 19 types — zéro construction, zéro lecture, donc rien à exiger. Le

@@ -44,6 +44,7 @@ namespace Engine.Animation.Test
 
     public class RecordedSession
     {
+        public DateTime RecordingEndTime { get; set; }   // ligne 1128 de l'orchestrateur
         public List<string> Calls { get; set; } = new List<string>();
         public List<string> Events { get; set; } = new List<string>();
         public List<string> StateTransitions { get; set; } = new List<string>();
@@ -76,11 +77,27 @@ namespace Engine.Animation.Test
         public List<string> Findings { get; set; } = new List<string>();
         public List<string> RecentCalls { get; set; } = new List<string>();
         public List<string> RecentStateTransitions { get; set; } = new List<string>();
-        public List<string> DataValidation { get; set; } = new List<string>();
+        public DataValidationReport DataValidation { get; set; } = new DataValidationReport();
 
         public override string ToString()
         {
             return Status;
         }
+    }
+
+    // Trois types que l'analyse des corps de methode a reclames, avec leurs
+    // membres exacts : HealthStatus est compare a trois valeurs, et
+    // DataValidationReport est construit ligne 1114 avec deux champs.
+    public enum HealthStatus
+    {
+        Healthy,
+        Degraded,
+        Unhealthy
+    }
+
+    public class DataValidationReport
+    {
+        public bool AllValid { get; set; }
+        public int ValidatedItems { get; set; }
     }
 }

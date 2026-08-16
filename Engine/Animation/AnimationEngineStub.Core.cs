@@ -506,7 +506,10 @@ namespace Engine.Animation
         // ... autres paramètres
     }
 
-    public class AnimationEngineStubConfig
+    // `record` et non `class` : l'orchestrateur de tests ecrit
+    // `AnimationEngineStubConfig.Default with { ... }` (lignes 597-599), et
+    // l'expression `with` exige un type record — c'etait le CS8858.
+    public record AnimationEngineStubConfig
     {
         public StubSimulationMode SimulationMode { get; set; }
         public bool EnableCallLogging { get; set; }
@@ -522,6 +525,19 @@ namespace Engine.Animation
         public AnimationQualityLevel QualityLevel { get; set; }
         public AnimationUpdateMode UpdateMode { get; set; }
         public StubFeatureFlags FeatureFlags { get; set; } = StubFeatureFlags.None;
+        // Les neuf membres suivants sont reclames par l'orchestrateur de tests.
+        // MaxAllocatedObjects et MaxHandles sont compares a 0 (ligne 1464),
+        // MemoryLimitMB est multiplie par 0.9f (1148) : leurs types sont mesures.
+        public bool EnableDeterministicMode { get; set; }
+        public bool EnableGoldenOutputCapture { get; set; }
+        public bool EnableReplayMode { get; set; }
+        public bool EnableScenarioExecution { get; set; }
+        public bool EnableStateSnapshotting { get; set; }
+        public bool EnableTelemetry { get; set; }
+        public int MaxAllocatedObjects { get; set; }
+        public int MaxHandles { get; set; }
+        public float MemoryLimitMB { get; set; }
+
         public static AnimationEngineStubConfig Default => new AnimationEngineStubConfig();
     }
 

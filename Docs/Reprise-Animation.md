@@ -214,11 +214,21 @@ qui ne soit un choix assumé. La suite n'est plus de l'assainissement :
    `python Tools/diagnostic.py AI Systems` rend **0 fichier retenu** : aucun ne
    passe la validation. Mais les deux dossiers ne se ressemblent pas.
 
-   `Systems/` : huit fichiers de débris, appels d'outil JSON ou JavaScript brut,
-   tous des tentatives avortées d'extraire du code depuis `Snake2000.cs`.
-   `WeatherSystemcs` n'a même pas d'extension `.cs`. Même traitement que les 18
-   déjà vidés, mais **à confirmer avec Tom d'abord** : ces neuf fichiers ne sont
-   **pas suivis par git**, rien n'y serait récupérable.
+   `Systems/` : **traité.** Les dix fichiers sont désormais des repères vides et
+   suivis par git. Tous portaient un appel d'outil JSON ou du JavaScript brut,
+   tentatives avortées d'extraire du code depuis `Snake2000.cs`.
+
+   Deux avaient été mis de côté par une garde qui refuse de vider ce qui
+   contient une déclaration C#. **Après lecture, c'étaient des débris aussi** :
+   l'un écrivait `"Achievement logged!"`, l'autre sortait sa classe d'une
+   fonction nommée `generateWeatherSystemCode` précédée de
+   `// Dummy function to simulate code generation` — mot pour mot l'exemple que
+   la docstring de `file_manager.py` cite comme déchet. **Le rôle d'une garde
+   est de forcer une lecture, pas de juger de la valeur** ; ne pas confondre
+   « la garde a refusé » avec « il y avait quelque chose à sauver ».
+
+   `WeatherSystemcs` n'a toujours pas d'extension `.cs` : aucun outil ne le voit,
+   ni le diagnostic, ni une recherche `--include=*.cs`.
 
    `AI/SnakeAI.cs` : **24 Ko de C# écrit à la main** — `enum AIType`, des
    personnalités d'IA. Ce n'est pas un fichier compilable : il commence par

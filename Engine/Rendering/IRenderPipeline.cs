@@ -219,7 +219,8 @@ namespace Engine.Rendering
         /// <param name="name">Nom du nouveau pipeline dérivé.</param>
         /// <param name="mutate">Action pour modifier le builder du pipeline.</param>
         /// <returns>Le nouveau pipeline dérivé.</returns>
-        IRenderPipeline DerivePipeline(string name, Action<IRenderPipelineBuilder> mutate);
+        // `IRenderPipeline DerivePipeline(string name, Action<IRenderPipelineBuilder> mutate);`
+        // retiree : aucun appelant, et IRenderPipelineBuilder ne nomme aucun membre.
 
         /// <summary>
         /// Vérifie si ce pipeline est dérivé d'un autre pipeline parent.
@@ -232,7 +233,8 @@ namespace Engine.Rendering
         /// Capture un instantané du pipeline pour l'inspection et les tests.
         /// </summary>
         /// <returns>Un snapshot du pipeline.</returns>
-        RenderPipelineSnapshot CaptureSnapshot();
+        // `RenderPipelineSnapshot CaptureSnapshot();` retiree : aucun appelant, et
+        // RenderPipelineSnapshot ne nomme aucun membre.
 
         /// <summary>
         /// Construit le graphe de rendu interne du pipeline.

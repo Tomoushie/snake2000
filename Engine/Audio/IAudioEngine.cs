@@ -427,7 +427,11 @@ namespace Engine.Audio
     public interface IAudioSynthesizer
     {
         void GenerateNote(float frequency, float duration, float volume);
-        void PlaySequence(Note[] sequence);
+        // `void PlaySequence(Note[] sequence);` retiree du contrat : aucun appelant
+        // dans tout le depot, et son seul type absent — Note — ne nomme aucun membre.
+        // Meme regle que pour les 405 methodes d'IJobSystem : plutot que d'ecrire une
+        // coquille vide pour faire taire l'erreur, le membre sort du contrat et y
+        // reviendra le jour ou un appelant reel le demande.
     }
 
     public interface IAudioMIDI

@@ -61,6 +61,36 @@ namespace Engine.Animation
         Normal,
     }
 
+    // Les quatre types ci-dessous sont les SEULS des douze absents de ce fichier
+    // dont un membre soit nomme quelque part. Les huit autres — IAnimationClip,
+    // AnimationSubsystemType, IAnimationPlayback, AnimationEngineContext,
+    // AnimationEventMarker, IPoseBuffer, BoneOverride, AnimationSubsystemStatus —
+    // n'apparaissent qu'en signature : les declarer serait ecrire huit coquilles
+    // vides. Ils restent absents, et leurs erreurs restent nommees.
+
+    public enum RootMotionMode
+    {
+        None,       // ligne 2549
+    }
+
+    public enum AnimationPlaybackState
+    {
+        Playing,    // lignes 1779 et 2567
+    }
+
+    public struct RootMotionSample
+    {
+        public static RootMotionSample Identity => default;   // ligne 2591
+    }
+
+    public struct SkeletonInfo
+    {
+        public string Name;         // ecrit ligne 1455
+        public BoneInfo[] Bones;    // ecrit ligne 1456
+        public int RootBoneIndex;   // ecrit ligne 1457
+        public int BoneCount;       // lu ligne 1422
+    }
+
     public enum DummyAnimationEngineState
     {
         Uninitialized,

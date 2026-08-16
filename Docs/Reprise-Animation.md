@@ -30,13 +30,30 @@ des types absents. En retirer **un seul** laissait 1 à 2 erreurs. En retirer
 
 | ce qu'on mesure | erreurs |
 |---|---|
-| le dépôt aujourd'hui (`dotnet build Tools/Build-complet.csproj`) | **38** |
-| … une fois `DummyAnimationEngine.cs` exclu | **593 distinctes** |
+| le dépôt (`dotnet build Tools/Build-complet.csproj`) | **38** |
+| … avec `-p:SansStub=true` | **536 distinctes** (593 avant le lot GPU) |
 
-Les 593 : 246 `CS1061` (membre inexistant), 149 `CS0103` (nom inexistant),
-53 `CS0117`, 24 `CS1729` (constructeur absent). Concentrées sur
-`GPUProfilerHook` (93), `ThreadAffinityManager` (79),
-`AnimationEngineStubOrchestrator` (67), le bridge (64).
+**Deux erreurs de mesure commises le 17 août, à ne pas refaire :**
+
+- Retirer un type encore référencé affiche un chiffre **plus petit** — les
+  `CS0246` qui en résultent font échouer l'étape de déclaration et masquent à
+  nouveau tous les corps. Un total qui *baisse* après une suppression doit être
+  vérifié : il peut être un masque, pas un progrès. Vu ici : 17 affichées pour
+  555 réelles.
+- Chercher `.Methode(` ne trouve **que les appels externes**. Les appels
+  internes à une classe ne sont pas qualifiés. `GetMetricsSnapshot` semblait
+  sans appelant ; il en avait onze.
+
+Les 536 : 159 `CS1061` (membre inexistant), 152 `CS0103` (nom inexistant),
+53 `CS0117`, 24 `CS1729` (constructeur absent). Par fichier :
+`ThreadAffinityManager` **79**, le bridge **68**,
+`AnimationEngineStubOrchestrator` **67**, `AnimationEngineStub` **54**,
+`IAudioEngine` **51**, `AnimationEngineStub.Index` **48**, `SnakeAI` **42**,
+`GPUProfilerHook` **34** (93 avant).
+
+Les messages qui reviennent le plus disent où creuser : `'Vector2' ne contient
+pas de définition pour 'Zero'` (13), `le nom '_mixerLock' n'existe pas` (13),
+`AnimationEngineStubFactory n'existe pas` (12).
 
 **`Tools/Build-complet.csproj` existe pour ça** : il compile tout le dépôt —
 `Snake2000.cs`, `Engine`, `Game`, `AI`, `Systems` — là où

@@ -121,7 +121,37 @@ namespace Engine.Animation
     public class AnimationInverseKinematicsSystem { }
     public class AnimationProceduralSystem { }
     public class AnimationStateMachineSystem { }
-    public class SubsystemDescriptor { }
+    // Le seul des treize types « sans membre » a qui un site d'appel en reclame :
+    // dix proprietes lues, et un constructeur a treize parametres releve sur les
+    // deux `new SubsystemDescriptor(...)` d'Index.cs, lignes 189 et 453.
+    public class SubsystemDescriptor
+    {
+        public string Name { get; set; }
+        public string Version { get; set; }
+        public List<string> Dependencies { get; set; }
+        public SubsystemType Type { get; set; }
+        public SubsystemHealthStatus Status { get; set; }
+        public string Description { get; set; }
+        public List<string> Tags { get; set; }
+        public string Author { get; set; }
+        public DateTime LastModified { get; set; }
+        public StubFeatureFlags FeatureFlags { get; set; }
+        public SubsystemSecurityLevel SecurityLevel { get; set; }
+        public StressProfile StressProfile { get; set; }
+        public float PerformanceScore { get; set; }
+
+        public SubsystemDescriptor(
+            string name, string version, List<string> dependencies, SubsystemType type,
+            SubsystemHealthStatus status, string description, List<string> tags, string author,
+            DateTime lastModified, StubFeatureFlags featureFlags, SubsystemSecurityLevel securityLevel,
+            StressProfile stressProfile, float performanceScore)
+        {
+            Name = name; Version = version; Dependencies = dependencies; Type = type;
+            Status = status; Description = description; Tags = tags; Author = author;
+            LastModified = lastModified; FeatureFlags = featureFlags; SecurityLevel = securityLevel;
+            StressProfile = stressProfile; PerformanceScore = performanceScore;
+        }
+    }
     public class SubsystemEventPlayer { }
     public class SubsystemHealthMonitor { }
     public class SubsystemHotSwapManager { }

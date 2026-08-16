@@ -78,6 +78,7 @@ namespace Engine.Animation
 
     public enum SubsystemHealthStatus
     {
+        Unknown,    // reclamee par AnimationEngineStub.Index.cs, sept fois
         Healthy,
         Warning,
         Error,

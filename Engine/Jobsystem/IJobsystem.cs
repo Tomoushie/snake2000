@@ -2388,6 +2388,23 @@ namespace Engine.Core
         public Dictionary<int, int> ThreadToCoreMap;
         public bool EnableHyperthreading;
         public ThreadAffinityMode Mode;
+
+        // Les neuf membres ci-dessous sont reclames par ThreadAffinityManager.
+        // Les cinq premiers ont leur type dicte par un usage precis :
+        //   EnableAutoBalancing / SafeMode  testes en booleen        (ligne 613)
+        //   RebalanceIntervalSec            compare a TotalSeconds   (615, 1197)
+        //   RebalanceThreshold              compare a une fraction 0..1 (634, 1198)
+        // Les quatre derniers ne sont que lus : leur type est deduit du nom, pas
+        // mesure. A revoir si un appelant les contraint un jour.
+        public bool EnableAutoBalancing;
+        public bool SafeMode;
+        public double RebalanceIntervalSec;
+        public float RebalanceThreshold;
+        public string DefaultProfile;
+        public bool CoreParkingEnabled;
+        public bool HugePagesEnabled;
+        public bool PrefetcherEnabled;
+        public float TurboBudgetPercentage;
     }
 
     public struct ThreadAffinityHeatmap

@@ -174,6 +174,8 @@ namespace Engine.Animation
         public float X, Y, Z;
         public Vector3(float x, float y, float z) => (X, Y, Z) = (x, y, z);
         public static Vector3 Zero => new Vector3(0, 0, 0);
+        public static Vector3 Up => new Vector3(0, 1, 0);        // reclame par un appelant reel
+        public static Vector3 Forward => new Vector3(0, 0, 1);   // idem
     }
 
     public struct Quaternion

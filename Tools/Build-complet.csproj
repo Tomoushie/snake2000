@@ -36,7 +36,12 @@
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
-    <NoWarn>CS8632;CS8618;CS8600;CS8602;CS8603;CS8604;CS8625</NoWarn>
+    <!--
+      Tous les avertissements de nullabilite sont tus. Le code n'a jamais ete
+      ecrit sous `Nullable`, et CS8765 seul en produit une centaine sur
+      IRenderEngine — de quoi noyer les erreurs qu'on cherche.
+    -->
+    <NoWarn>CS8632;CS8618;CS8600;CS8601;CS8602;CS8603;CS8604;CS8618;CS8625;CS8765;CS8767;CS8620;CS8619</NoWarn>
     <BaseOutputPath>$(MSBuildThisFileDirectory)obj-mesure\</BaseOutputPath>
   </PropertyGroup>
 

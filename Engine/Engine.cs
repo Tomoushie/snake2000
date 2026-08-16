@@ -214,11 +214,41 @@ public struct Vector2
 {
     public float X, Y;
     public Vector2(float x, float y) { X = x; Y = y; }
+
+    // Les huit membres ci-dessous ne sont pas des ajouts d'agrement : chacun est
+    // reclame par un site d'appel reel du depot, que le compilateur a nomme une
+    // fois l'analyse des corps de methode enfin atteinte.
+    public static Vector2 Zero => new Vector2(0f, 0f);
+    public static Vector2 Up => new Vector2(0f, -1f);   // Y croit vers le BAS a l'ecran
+    public static Vector2 UnitY => new Vector2(0f, 1f);
+
+    public float LengthSquared => X * X + Y * Y;
+    public float Length => (float)Math.Sqrt(LengthSquared);
+
+    /// <summary>Rend le vecteur unitaire. Un vecteur nul reste nul plutot que de produire NaN.</summary>
+    public Vector2 Normalized
+    {
+        get
+        {
+            var l = Length;
+            return l > 1e-6f ? new Vector2(X / l, Y / l) : Zero;
+        }
+    }
+
+    public static float Dot(Vector2 a, Vector2 b) => a.X * b.X + a.Y * b.Y;
+    public static float Distance(Vector2 a, Vector2 b) => new Vector2(a.X - b.X, a.Y - b.Y).Length;
+
+    public static Vector2 operator +(Vector2 a, Vector2 b) => new Vector2(a.X + b.X, a.Y + b.Y);
+    public static Vector2 operator -(Vector2 a, Vector2 b) => new Vector2(a.X - b.X, a.Y - b.Y);
+    public static Vector2 operator *(Vector2 v, float k) => new Vector2(v.X * k, v.Y * k);
+    public static Vector2 operator *(float k, Vector2 v) => v * k;
 }
 
 public struct RectangleF
 {
     public float X, Y, Width, Height;
+    public float Left => X;     // reclame par un appelant reel
+    public float Top => Y;      // idem
     public float Right => X + Width;
     public float Bottom => Y + Height;
     public RectangleF(float x, float y, float w, float h) { X = x; Y = y; Width = w; Height = h; }

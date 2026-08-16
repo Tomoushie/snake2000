@@ -10,6 +10,8 @@ using System.Runtime.CompilerServices;
 using System.Collections.Concurrent;
 using System.Text.Json; // Pour la sérialisation de snapshots
 using System.Text.Json.Serialization; // Pour la configuration de la sérialisation
+using Engine.Core;              // IJobSystem, JobHandle, JobCategory, CategoryAffinityMap...
+using Snake2000.Engine.Core;    // EventBus, Profiler, ResourceManager
 using Engine.Profiling;
 using Engine.Events;
 using Engine.Utilities; // Pour INativeAffinityProvider, etc.

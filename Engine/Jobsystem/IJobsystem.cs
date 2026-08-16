@@ -5529,7 +5529,10 @@ namespace Engine.Core
     }
 
     // Structures pour la gestion des threads enrichies
-    public struct ThreadAffinityManagerConfig
+    // Classe et non struct : ThreadAffinityManager publie sa configuration par
+    // Volatile.Read/Write, qui exigent un type reference, et la remplace d'un
+    // bloc sous _configLock plutot que d'en muter les champs.
+    public class ThreadAffinityManagerConfig
     {
         public long CpuAffinityMask;
         public int ReservedCoreCount;

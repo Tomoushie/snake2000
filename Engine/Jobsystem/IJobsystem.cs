@@ -1972,49 +1972,12 @@ namespace Engine.Core
         // ═══════════════════════════════════════════════════════════════
 
         /// <summary>
-        /// Obtient le temps d'exécution d'un job.
-        /// </summary>
-        /// <param name="handle">Handle du job</param>
-        /// <returns>Temps d'exécution</returns>
-        [ThreadSafe]
-        TimeSpan GetJobExecutionTime(JobHandle handle);
-
-        /// <summary>
-        /// Obtient la latence d'un job (temps entre planification et début d'exécution).
-        /// </summary>
-        /// <param name="handle">Handle du job</param>
-        /// <returns>Latence du job</returns>
-        [ThreadSafe]
-        TimeSpan GetJobLatency(JobHandle handle);
-
-        /// <summary>
         /// Obtient le temps total d'un job (latence + exécution).
         /// </summary>
         /// <param name="handle">Handle du job</param>
         /// <returns>Temps total</returns>
         [ThreadSafe]
         TimeSpan GetJobTotalTime(JobHandle handle);
-
-        /// <summary>
-        /// Obtient le débit du système de jobs.
-        /// </summary>
-        /// <returns>Rapport de débit</returns>
-        [ThreadSafe]
-        JobThroughputReport GetJobThroughput();
-
-        /// <summary>
-        /// Obtient le taux d'échec des jobs.
-        /// </summary>
-        /// <returns>Rapport d'échec</returns>
-        [ThreadSafe]
-        JobFailureReport GetJobFailureRate();
-
-        /// <summary>
-        /// Obtient le nombre de tentatives de retry des jobs.
-        /// </summary>
-        /// <returns>Rapport de retry</returns>
-        [ThreadSafe]
-        JobRetryReport GetJobRetryCount();
 
         /// <summary>
         /// Obtient les données de performance d'une catégorie de jobs.
@@ -2117,20 +2080,6 @@ namespace Engine.Core
         /// <returns>Données de télémétrie</returns>
         [ThreadSafe]
         JobSystemTelemetryData GetJobSystemTelemetry();
-
-        /// <summary>
-        /// Obtient la heatmap de charge du système de jobs.
-        /// </summary>
-        /// <returns>Heatmap de charge</returns>
-        [ThreadSafe]
-        JobSystemHeatmap GetJobSystemHeatmap();
-
-        /// <summary>
-        /// Obtient la timeline du système de jobs.
-        /// </summary>
-        /// <returns>Timeline des jobs</returns>
-        [ThreadSafe]
-        JobTimelineReport GetJobSystemTimeline();
 
         /// <summary>
         /// Obtient l'historique des événements du système de jobs.
@@ -3137,11 +3086,6 @@ namespace Engine.Core
         /// Peut nécessiter un redémarrage du système selon les paramètres modifiés.
         /// </remarks>
         void ApplyConfiguration(JobSystemConfig config);
-
-        /// <summary>
-        /// Recharge la configuration sans redémarrer le système.
-        /// </summary>
-        void ReloadConfiguration();
 
         /// <summary>
         /// Enregistre un type de job personnalisé.

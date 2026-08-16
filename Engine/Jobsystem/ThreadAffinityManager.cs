@@ -13,8 +13,8 @@ using System.Text.Json.Serialization; // Pour la configuration de la sérialisat
 using Engine.Core;              // IJobSystem, JobHandle, JobCategory, CategoryAffinityMap...
 using Snake2000.Engine.Core;    // EventBus, Profiler, ResourceManager
 using Engine.Profiling;
-using Engine.Events;
-using Engine.Utilities; // Pour INativeAffinityProvider, etc.
+// Engine.Events et Engine.Utilities n'existent nulle part dans le depot : ils
+// designaient une organisation prevue mais jamais creee.
 
 namespace Engine.Jobsystem
 {

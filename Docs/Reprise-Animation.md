@@ -12,19 +12,22 @@ Mesuré avec `python Tools/diagnostic.py Engine Game` :
 |---|---|---|
 | 15 août | 71 | 1 629 |
 | après la session « IAnimationEngine » | 77 | 509 |
-| **maintenant** | **79** | **111** |
+| **maintenant** | **80** | **41** |
 
-`Engine/Jobsystem/`, `Engine/Audio/`, le **bridge** et l'orchestrateur de tests
-sont propres. **`CS0102`, `CS0535` et `CS0050` ont disparu du dépôt entier.**
+**Les 41 erreurs restantes sont toutes des `CS0246`, et toutes délibérées.**
+Un seul code d'erreur subsiste dans tout le dépôt ; `CS0102`, `CS0535`,
+`CS0050`, `CS0539`, `CS0234` et `CS0677` ont disparu.
 
-| fichier | erreurs | nature |
+| fichier | erreurs | pourquoi elles restent |
 |---|---|---|
-| `Engine/Animation/DummyAnimationEngine.cs` | 38 | huit types laissés absents **délibérément** |
-| `Engine/Animation/AnimationEngineStub.cs` + `.Core.cs` + `.Index.cs` | 57 | jamais examiné |
-| `Engine/Profiling/GPUProfilerHook.cs` | 12 | jamais examiné |
-| quatre fichiers à 1 ou 2 erreurs | 5 | résidus nommés |
+| `Engine/Animation/DummyAnimationEngine.cs` | 38 | huit types qui n'apparaissent qu'**en signature** |
+| `Engine/Rendering/IRenderPipeline.cs` | 2 | `IRenderPipelineBuilder`, `RenderPipelineSnapshot` — idem |
+| `Engine/Audio/IAudioEngine.cs` | 1 | `Note` — `PlaySequence(Note[])` sans appelant |
 
-Par code : `CS0246` × 89, `CS0234` × 12, `CS0539` × 9, `CS0677` × 1.
+**Ne pas les « corriger » sans mesurer d'abord.** Chacun de ces types ne nomme
+aucun membre : les déclarer produirait des coquilles vides. Ce sont des erreurs
+nommées, pas un manque masqué. Elles disparaîtront le jour où un appelant réel
+dictera un contenu.
 
 ## La règle qui a tranché trois fois
 
@@ -189,25 +192,48 @@ et comparer « fichiers retenus » au nombre de `.cs` non vides.
 
 ## Ce qui reste à faire, par ordre de rendement
 
-1. **`AnimationEngineStub.cs` + `.Core.cs` + `.Index.cs`, 57** — jamais examinés
-   depuis le découpage. Puis `GPUProfilerHook`, 12. **Commencer par chercher les
-   types dans le dépôt** : c'est ce qui a produit tous les gros gains.
+Le chantier de compilation est **terminé** au sens où il ne reste aucune erreur
+qui ne soit un choix assumé. La suite n'est plus de l'assainissement :
 
-   | fichier | avant | après | coût |
-   |---|---|---|---|
-   | le bridge | 97 | 13 | **14 lignes d'`using`** |
-   | `IAudioEngine` | 87 | 12 | 5 lignes |
-   | `DummyAnimationEngine` | 94 | 74 | 3 lignes |
+1. **Décider ce que devient `DummyAnimationEngine`** — 2 597 lignes que rien ne
+   référence, 38 erreurs assumées. Le stub a été conservé pour des tests qui
+   n'existent pas encore. S'ils n'arrivent pas, il rejoint `Docs/Intention/`.
+2. **Unifier les espaces de noms** — `Snake2000.Engine.*` contre `Engine.*`.
+   Deux `IJob`, deux `Vector2`, deux `Vector3` coexistent et sont qualifiés à la
+   main dans les fichiers qui importent les deux côtés. C'est le dernier
+   chantier structurel, et il est enfin ouvrable.
+3. **Les 19 fichiers hors mesure** — dix-sept contiennent un appel d'outil JSON
+   au lieu de code. Débris de génération, pas des repères.
+4. **Faire compiler le projet pour de bon** : `Snake2000App.csproj` ne référence
+   toujours que `Snake2000.cs`.
 
-   Le bridge déclarait ses propres types dans **six espaces de noms
-   différents**, qui ne se voyaient donc pas les uns les autres. Sur 22 types
-   « introuvables », 21 existaient — plusieurs dans le fichier lui-même.
+### La méthode, si un nouveau foyer d'erreurs apparaît
 
-   Le mot « dupliqué » d'un diagnostic mérite la même méfiance : les 82 `CS0102`
-   du bridge n'étaient pas deux versions à fusionner comme pour
-   `AnimationEngineStub`, mais les collisions internes de 1 509 champs
-   `*Knowledge` jamais lus (archive dans
-   `Docs/Intention/MovementComponent-Knowledge.cs.txt`).
+**Chercher les types dans le dépôt avant de les croire absents** : c'est ce qui
+a produit tous les gros gains.
+
+| fichier | avant | après | coût |
+|---|---|---|---|
+| le bridge | 97 | 13 | **14 lignes d'`using`** |
+| `IAudioEngine` | 87 | 12 | 5 lignes |
+| `AnimationEngineStub` ×3 | 57 | 37 | 10 `using` fantômes retirés |
+| `GPUProfilerHook` | 12 | 0 | 2 `using` + un `struct` → `class` |
+| `DummyAnimationEngine` | 94 | 74 | 3 lignes |
+
+Le bridge déclarait ses propres types dans **six espaces de noms différents**,
+qui ne se voyaient donc pas les uns les autres. Sur 22 types « introuvables »,
+21 existaient — plusieurs dans le fichier lui-même.
+
+Cinq espaces de noms sont importés un peu partout et **n'existent nulle part** :
+`Engine.Events`, `Engine.Utilities`, `Engine.Services`, `Engine.Jobs`,
+`Engine.Resources`, plus `Engine.Mathematics`. Les retirer coûte une ligne
+chacun.
+
+Le mot « dupliqué » d'un diagnostic mérite la même méfiance : les 82 `CS0102`
+du bridge n'étaient pas deux versions à fusionner comme pour
+`AnimationEngineStub`, mais les collisions internes de 1 509 champs
+`*Knowledge` jamais lus (archive dans
+`Docs/Intention/MovementComponent-Knowledge.cs.txt`).
 2. **`DummyAnimationEngine`, 38 — tranché, et le stub est conservé.** Rien ne
    le référence (2 597 lignes, zéro appelant), mais il est cohérent et servira
    quand des tests arriveront. Des douze types absents, **quatre seulement

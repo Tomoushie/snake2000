@@ -35,6 +35,32 @@ namespace Engine.Animation
 {
     #region Enums
 
+    // Les trois enumerations ci-dessous n'apparaissaient nulle part : ni dans le
+    // depot, ni dans Docs/Intention/IAnimationEngine.cs.txt. Le releve de leurs
+    // usages tient en six lignes, toutes dans ce fichier, toutes en VALEUR PAR
+    // DEFAUT d'un parametre — et les cinq methodes concernees n'ont aucun
+    // appelant. Une seule valeur est donc nommee pour chacune.
+    //
+    // Elles sont declarees sur ce qui est mesure, et rien de plus. Ajouter
+    // Additive, World ou High serait inventer un contrat que personne ne
+    // demande — c'est exactement ce qui a produit treize types vides sur le lot
+    // d'affinite. Chaque valeur qui manquera un jour viendra d'un appelant reel.
+
+    public enum PoseBlendMode
+    {
+        Lerp,
+    }
+
+    public enum BoneTransformSpace
+    {
+        Local,
+    }
+
+    public enum AnimationStreamingPriority
+    {
+        Normal,
+    }
+
     public enum DummyAnimationEngineState
     {
         Uninitialized,
@@ -587,16 +613,22 @@ namespace Engine.Animation
         public void Present() { }
     }
 
-    // [CORRECTION] Subsystem dummy
+    // Aligne sur le contrat REEL de IAnimationSubsystem, releve dans
+    // AnimationEngineStub.Core.cs ligne 193. Ce dummy avait ete ecrit contre une
+    // autre version du meme nom : `AnimationSubsystemType Type`,
+    // `Initialize(AnimationEngineContext)`, `GetStatus()`, `ValidateIntegrity()`
+    // et `CheckHealth()` — cinq membres dont aucun ne figure au contrat, et quatre
+    // types qui n'existent nulle part. D'ou les CS0535 et CS0738 apparus des que
+    // l'interface est devenue visible.
     public sealed class DummyAnimationSubsystem : IAnimationSubsystem
     {
-        public AnimationSubsystemType Type { get; set; }
-        public void Initialize(AnimationEngineContext context) { /* no-op */ }
+        public string Name => "DummySubsystem";
+        public SubsystemType Type { get; set; }
+        public void Initialize(AnimationEngineStub engine) { /* no-op */ }
         public void Shutdown() { /* no-op */ }
         public void Update(float deltaTime) { /* no-op */ }
-        public AnimationSubsystemStatus GetStatus() => AnimationSubsystemStatus.Ready;
-        public void ValidateIntegrity() { /* no-op */ }
-        public AnimationResult CheckHealth() => AnimationResult.Ok();
+        public AnimationEngineMetrics GetMetrics() => default;
+        public SubsystemHealthStatus GetHealthStatus() => SubsystemHealthStatus.Healthy;
     }
 
     #endregion

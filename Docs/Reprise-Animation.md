@@ -12,7 +12,7 @@ Mesuré avec `python Tools/diagnostic.py Engine Game` :
 |---|---|---|
 | 15 août | 71 | 1 629 |
 | après la session « IAnimationEngine » | 77 | 509 |
-| **maintenant** | **77** | **350** |
+| **maintenant** | **77** | **345** |
 
 `Engine/Jobsystem/` est **entièrement propre**, et **`CS0102` a disparu du dépôt**.
 
@@ -199,14 +199,18 @@ et comparer « fichiers retenus » au nombre de `.cs` non vides.
    un diagnostic** — il peut désigner deux versions à fusionner, comme pour
    `AnimationEngineStub`, ou les collisions internes d'un remplissage généré,
    comme ici. La mesure des appelants distingue les deux en une commande.
-2. **Une question à trancher avant de toucher à `DummyAnimationEngine`.** Ses
-   43 erreurs restantes sont toutes des `CS0246` réclamés par 2 000 lignes de
-   méthodes écrites pour l'interface à 655 membres qui n'existe plus
-   (`IAnimationClip`, `IAnimationPlayback`, `AnimationEngineContext`…). C'est le
-   motif « intention contre contrat » un étage plus bas — mais sur un **stub**,
-   dont le rôle est justement d'être complet. Générer les types et garder le
-   stub entier, ou le réduire comme les interfaces : deux projets différents,
-   et c'est à Tom de choisir.
+2. **`DummyAnimationEngine`, 38 — tranché, et le stub est conservé.** Rien ne
+   le référence (2 597 lignes, zéro appelant), mais il est cohérent et servira
+   quand des tests arriveront. Des douze types absents, **quatre seulement
+   avaient un membre nommé** et ont été déclarés dessus : `SkeletonInfo`,
+   `AnimationPlaybackState`, `RootMotionSample`, `RootMotionMode`. Les huit
+   autres n'apparaissent qu'**en signature** — les déclarer serait écrire huit
+   coquilles vides. Ils restent absents, erreurs nommées plutôt que masquées.
+
+   **La distinction à retenir : un type très utilisé peut n'avoir aucun
+   contrat.** `IAnimationClip` compte dix usages et pas un seul membre lu. Le
+   nombre d'usages ne dit rien ; seuls les membres nommés font un contrat, et
+   c'est la seule chose qu'un brief puisse exiger.
 3. **`IAudioEngine` 87 et `AnimationEngineStubOrchestrator` 51** — jamais
    examinés. Commencer par y chercher les types qui existent déjà : c'est ce qui
    a fait tomber `DummyAnimationEngine` de 94 à 74 pour trois lignes d'`using`.

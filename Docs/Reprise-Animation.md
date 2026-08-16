@@ -210,10 +210,44 @@ qui ne soit un choix assumé. La suite n'est plus de l'assainissement :
    Deux `IJob`, deux `Vector2`, deux `Vector3` coexistent et sont qualifiés à la
    main dans les fichiers qui importent les deux côtés. C'est le dernier
    chantier structurel, et il est enfin ouvrable.
-3. **Les 19 fichiers hors mesure** — dix-sept contiennent un appel d'outil JSON
-   au lieu de code. Débris de génération, pas des repères.
-4. **Faire compiler le projet pour de bon** : `Snake2000App.csproj` ne référence
-   toujours que `Snake2000.cs`.
+3. **`AI/` et `Systems/`, jamais mesurés — et il y a du vrai travail dedans.**
+   `python Tools/diagnostic.py AI Systems` rend **0 fichier retenu** : aucun ne
+   passe la validation. Mais les deux dossiers ne se ressemblent pas, et
+   **aucun des deux n'est suivi par git** — rien n'y est récupérable.
+
+   `Systems/` : huit fichiers de débris, appels d'outil JSON ou JavaScript brut,
+   tous des tentatives avortées d'extraire du code depuis `Snake2000.cs`.
+   `WeatherSystemcs` n'a même pas d'extension `.cs`. Même traitement que les 18
+   déjà vidés, mais **à confirmer avec Tom d'abord** : git n'en a pas de copie.
+
+   `AI/SnakeAI.cs` : **24 Ko de C# écrit à la main** — `enum AIType`, des
+   personnalités d'IA. Ce n'est pas un fichier compilable : il commence par
+   « Ajouter dans la section des variables membres », c'est un fragment destiné
+   à être collé dans `Snake2000.cs`. **Ne pas le vider ni le supprimer.** Il lui
+   faut soit une intégration dans `Snake2000.cs`, soit une enveloppe
+   `namespace` + `class` pour devenir un fichier à part entière.
+4. **Faire compiler le projet pour de bon.** `Snake2000App/Snake2000App.csproj`
+   ne référence **que** `..\Snake2000.cs`, 113 lignes — les arbres `Engine/`,
+   `Game/`, `AI/` et `Systems/` sont hors compilation. Les y faire entrer est un
+   chantier à part entière : ce sont 80 fichiers, et le `.csproj` cible
+   `net8.0-windows` avec `Nullable` et `ImplicitUsings` activés, deux réglages
+   que le code existant n'a jamais eu à satisfaire.
+
+### L'écart entre fichiers présents et fichiers mesurés
+
+Il valait 19, il vaut **1**. Les 18 fichiers de débris ont été vidés — ils
+rejoignent les 184 repères vides du dépôt, le nom gardant l'intention. Le seul
+restant est `Engine/SnakeGameEngine.cs`, une note de câblage écrite à la main,
+commentée pour rester lisible sans casser la compilation.
+
+**Refaire ce contrôle après chaque gros lot** : un fichier syntaxiquement cassé
+disparaît du compteur sans prévenir, et le compteur devient flatteur.
+
+```bash
+python Tools/diagnostic.py Engine Game
+```
+
+et comparer « fichiers retenus » au nombre de `.cs` non vides.
 
 ### La méthode, si un nouveau foyer d'erreurs apparaît
 

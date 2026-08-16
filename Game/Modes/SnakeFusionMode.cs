@@ -13,5 +13,9 @@ namespace Snake2000.Modes
         public void Start() { }
         public void Update() { }
         public void End() { }
+
+        // Contrat porte par IGameMode et appele par SnakeGame : le mode
+        // modifie l'etat partage. Vide pour l'instant, comme l'etait Update().
+        public void ApplyRules(ref SnakeGameState state) { }
     }
 }

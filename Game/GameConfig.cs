@@ -38,7 +38,9 @@ namespace Snake2000.Gameplay
         // --- AUTRES PARAMÈTRES ---
         public static int InitialLives => 3;
 
-        // Instance singleton pour l'injection
-        public static GameConfig Instance { get; } = new GameConfig();
+        // Il y avait ici une propriete `Instance` renvoyant un GameConfig, vestige
+        // d'une injection par singleton abandonnee quand la classe est devenue
+        // statique. Un type static ne peut etre ni instancie ni renvoye (CS0722),
+        // et rien ne la referencait. L'acces se fait directement : GameConfig.X.
     }
 }

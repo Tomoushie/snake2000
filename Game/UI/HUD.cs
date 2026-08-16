@@ -11,14 +11,15 @@ namespace Snake2000.UI
         private readonly Font _font;
         private readonly Brush _brush;
         private readonly Pen _pen;
-        private readonly GameConfig _config;
 
-        public HUD(Font font, Brush brush, Pen pen, GameConfig config)
+        // GameConfig est une classe statique : elle ne peut etre ni un champ ni
+        // un parametre (CS0722/CS0723). Ses valeurs sont lues directement la ou
+        // elles servent ; une configuration statique injectee n'apporterait rien.
+        public HUD(Font font, Brush brush, Pen pen)
         {
             _font = font;
             _brush = brush;
             _pen = pen;
-            _config = config;
         }
 
         public void Draw(Graphics g, int score, int lives, string bannerText, int level, float timer)
@@ -35,15 +36,15 @@ namespace Snake2000.UI
             g.DrawString(timerText, _font, _brush, 360, 8);
 
             // Best Score
-            g.DrawString($"BEST {Properties.Settings.Default.BestScore:D6}", _font, _brush, _config.ScreenWidth - 100, 8);
+            g.DrawString($"BEST {Properties.Settings.Default.BestScore:D6}", _font, _brush, GameConfig.ScreenWidth - 100, 8);
 
             // Banner
             if (!string.IsNullOrEmpty(bannerText))
             {
                 using var bannerFont = new Font(_font.FontFamily, 16, FontStyle.Bold);
                 var size = g.MeasureString(bannerText, bannerFont);
-                float x = (_config.ScreenWidth - size.Width) / 2;
-                float y = (_config.TopBarHeight - size.Height) / 2 + 5;
+                float x = (GameConfig.ScreenWidth - size.Width) / 2;
+                float y = (GameConfig.TopBarHeight - size.Height) / 2 + 5;
                 g.DrawString(bannerText, bannerFont, Brushes.Yellow, x, y);
             }
         }

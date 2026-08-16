@@ -30,6 +30,10 @@ namespace Snake2000.Modes
             _boss = null;
         }
 
+        // Contrat porte par IGameMode et appele par SnakeGame : le mode
+        // modifie l'etat partage. Vide pour l'instant, comme l'etait Update().
+        public void ApplyRules(ref SnakeGameState state) { }
+
         public void SetBoss(BossEntity boss) => _boss = boss;
     }
 }

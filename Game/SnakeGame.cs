@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Windows.Forms;
 using Snake2000.Entities;
 using Snake2000.Modes;
 using Snake2000.Systems;

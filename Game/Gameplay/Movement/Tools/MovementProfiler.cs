@@ -1,4 +1,6 @@
 // Game/Gameplay/Movement/Tools/MovementProfiler.cs
+using System;
+using System.Diagnostics;
 
 public class MovementProfiler
 {

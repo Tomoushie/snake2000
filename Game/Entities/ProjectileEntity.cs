@@ -1,5 +1,6 @@
 // /Game/Entities/ProjectileEntity.cs
 using System.Drawing;
+using Snake2000.Gameplay;
 
 namespace Snake2000.Entities
 {

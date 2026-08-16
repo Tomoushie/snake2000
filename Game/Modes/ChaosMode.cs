@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using Snake2000.Core;
+using Snake2000.Gameplay;
 
 namespace Snake2000.Modes
 {

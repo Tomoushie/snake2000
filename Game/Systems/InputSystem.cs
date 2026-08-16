@@ -1,6 +1,7 @@
 // /Game/Systems/InputSystem.cs
 using System.Windows.Forms;
 using Snake2000.Entities;
+using Snake2000.Gameplay;
 
 namespace Snake2000.Systems
 {

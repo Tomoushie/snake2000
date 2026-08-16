@@ -15,6 +15,21 @@ using System.Threading.Tasks; // Pour l'export asynchrone, mise à jour physique
 using System.Linq; // Pour Parallel.ForEach
 using Engine.Animation; // Pour IAnimationEngine et IAnimationBridge
 
+// Les 22 types que ce fichier declarait introuvables existaient a 21, et
+// plusieurs dans le fichier LUI-MEME : il declare ses types dans six espaces de
+// noms differents, qui ne se voient donc pas les uns les autres. Ce n'etait pas
+// un probleme de types manquants mais d'imports.
+using Snake2000.Engine.Core;    // Entity, EntityManager, EventBus, IComponent, ISystem, Vector2
+using Snake2000.Engine.AI;      // IReusableComponent, NavMesh
+using Snake2000.Engine.Physics; // PhysicsSystem, RigidBodyComponent
+using Engine.Rendering;         // IRenderEngine
+using Game.Gameplay.Movement.Animation;    // IAnimationSystem
+using Game.Gameplay.Movement.Physics;      // IPhysicsSystem
+using Game.Gameplay.Movement.AudioVisual;  // IAudioVisualSystem
+using Game.Gameplay.Movement.Debugging;    // IDebugSystem
+using Game.Gameplay.Movement.Tools;        // FrameBudgetAllocator, IMovementLogger, IMovementProfiler
+using Game.Gameplay.Movement.Components;   // AnimationStateComponent
+
 // - Interfaces pour la cohérence -
 namespace Game.Gameplay.Movement
 {

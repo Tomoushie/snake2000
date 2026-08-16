@@ -31,7 +31,7 @@ des types absents. En retirer **un seul** laissait 1 à 2 erreurs. En retirer
 | ce qu'on mesure | erreurs |
 |---|---|
 | le dépôt (`dotnet build Tools/Build-complet.csproj`) | **38** |
-| … avec `-p:SansStub=true` | **375 distinctes** (593 le 17 août au matin) |
+| … avec `-p:SansStub=true` | **351 distinctes** (593 le 17 août au matin) |
 
 **Deux erreurs de mesure commises le 17 août, à ne pas refaire :**
 

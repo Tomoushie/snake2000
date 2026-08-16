@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;   // Marshal.SizeOf
 using System.Runtime.Serialization;
 using System.Security;
 using System.Net.Http; // Pour AnimationAssetCDNStub

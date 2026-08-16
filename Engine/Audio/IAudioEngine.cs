@@ -1010,6 +1010,10 @@ namespace Engine.Audio
         private readonly RingBuffer<AudioEngineMetrics> _metricsHistory = new RingBuffer<AudioEngineMetrics>(120); // 2s @ 60fps
         private readonly object _metricsLock = new object();
 
+        // Treize `lock (_mixerLock)` dans ce fichier, et pas une declaration : le
+        // verrou du mixeur n'existait nulle part. Il rejoint ses trois voisins.
+        private readonly object _mixerLock = new object();
+
         // [ARCHITECTURE B.1] Lifecycle
         private IAudioSource _currentMusicSource;
         private IAudioSource _nextMusicSource;

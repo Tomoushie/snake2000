@@ -12,13 +12,13 @@ Mesuré avec `python Tools/diagnostic.py Engine Game` :
 |---|---|---|
 | 15 août | 71 | 1 629 |
 | après la session « IAnimationEngine » | 77 | 509 |
-| **maintenant** | **77** | **432** |
+| **maintenant** | **77** | **350** |
 
-`Engine/Jobsystem/` est **entièrement propre**.
+`Engine/Jobsystem/` est **entièrement propre**, et **`CS0102` a disparu du dépôt**.
 
 | fichier | erreurs | nature |
 |---|---|---|
-| `Game/…/MovementAnimationBridgeSystem.cs` | 179 | 83 membres dupliqués dans une classe, le reste en types absents |
+| `Game/…/MovementAnimationBridgeSystem.cs` | 97 | types absents |
 | `Engine/Audio/IAudioEngine.cs` | 87 | jamais examiné |
 | `Engine/Animation/Tests/AnimationEngineStubOrchestrator.cs` | 51 | jamais examiné |
 | `Engine/Animation/DummyAnimationEngine.cs` | 43 | **uniquement** des types absents |
@@ -191,10 +191,14 @@ et comparer « fichiers retenus » au nombre de `.cs` non vides.
 
 ## Ce qui reste à faire, par ordre de rendement
 
-1. **Le bridge, 179** — dont 82 membres dupliqués dans une seule classe. C'est
-   le plus gros foyer et c'est du **découpage**, pas de la génération : même
-   méthode que pour `AnimationEngineStub`, et un script local compte les
-   doublons bien mieux qu'une lecture.
+1. **Le bridge, 97** — il n'y reste que des `CS0246`. Les 82 `CS0102` sont
+   partis avec les 1 509 champs `*Knowledge` de `struct MovementComponent`,
+   déclarés et jamais lus (archive dans
+   `Docs/Intention/MovementComponent-Knowledge.cs.txt`). Ce n'était pas un
+   découpage : il n'y avait rien en face. **Se méfier du mot « dupliqué » dans
+   un diagnostic** — il peut désigner deux versions à fusionner, comme pour
+   `AnimationEngineStub`, ou les collisions internes d'un remplissage généré,
+   comme ici. La mesure des appelants distingue les deux en une commande.
 2. **Une question à trancher avant de toucher à `DummyAnimationEngine`.** Ses
    43 erreurs restantes sont toutes des `CS0246` réclamés par 2 000 lignes de
    méthodes écrites pour l'interface à 655 membres qui n'existe plus

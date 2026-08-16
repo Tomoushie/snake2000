@@ -24,6 +24,12 @@ using System.Numerics;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Engine.Core;              // IJobSystem, JobHandle
+using Snake2000.Engine.Core;    // EventBus, Profiler, ResourceManager
+using Engine.Rendering;         // IRenderDevice, IRenderBackend, IMesh, MaterialHandle,
+                                // LODLevel, LODStrategy, SkeletonPoseHandle
+// IJob est declare des deux cotes — Engine.Core et Snake2000.Engine.Core — il est
+// donc qualifie sur ses usages plutot qu'importe.
 
 namespace Engine.Animation
 {
@@ -536,7 +542,16 @@ namespace Engine.Animation
 
     public class DummyJobSystem : IJobSystem
     {
-        public JobHandle Schedule<T>(T jobData, JobHandle dependsOn = default) where T : struct, IJob => default;
+        // Le contrat mesure de IJobSystem : trois membres, ceux que
+        // ThreadAffinityManager appelle. Voir Docs/Intention/IJobSystem.cs.txt.
+        public int GetWorkerThreadCount() => 0;
+        public void SuspendWorkerThread(int threadIndex) { }
+        public void SetJobAffinityHints(JobHandle jobHandle, AffinityHints hints) { }
+
+        // Les trois membres que ce dummy portait deja et que personne n'appelle.
+        // Ils ne font plus partie du contrat ; ils restent parce qu'ils ne genent
+        // pas et qu'une implementation reelle en aura besoin.
+        public JobHandle Schedule<T>(T jobData, JobHandle dependsOn = default) where T : struct, Engine.Core.IJob => default;
         public void Complete(JobHandle handle) { }
         public void CompleteAll() { }
     }
@@ -2116,12 +2131,14 @@ namespace Engine.Animation
             }
         }
 
-        public Vector2 ExtractRootMotionDelta(Snake2000.Engine.Core.Entity entity)
+        // Vector2 est qualifie : Snake2000.Engine.Core declare le sien, et le
+        // contrat de IAnimationEngine porte celui de System.Numerics.
+        public System.Numerics.Vector2 ExtractRootMotionDelta(Snake2000.Engine.Core.Entity entity)
         {
             ThrowIfDisposed();
 
             // Le moteur muet ne produit aucun deplacement racine.
-            return Vector2.Zero;
+            return System.Numerics.Vector2.Zero;
         }
 
         #endregion

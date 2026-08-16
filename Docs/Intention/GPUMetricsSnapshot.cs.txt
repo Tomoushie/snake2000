@@ -1,0 +1,366 @@
+// Circuit de metriques GPU retire de Engine/Profiling/GPUProfilerHook.cs le
+// 17 aout 2026.
+//
+// Mesure : GPUMetricsSnapshot ne sortait JAMAIS de son fichier (zero reference
+// ailleurs). CaptureMetrics remplissait ses 88 champs par 88 getters de
+// IRenderEngine qui n'existent pas, les rangeait dans _lastMetrics, et un
+// constructeur de copie les recopiait tous — ce qui donnait l'illusion que
+// chaque champ etait lu.
+//
+// Le seul consommateur d'IGPUProfilerHook dans le depot est
+// MovementAnimationBridgeSystem, et il appelle DEUX membres : BeginGPUSample et
+// EndGPUSample. GetMetricsSnapshot n'a aucun appelant.
+//
+// Repere de ce que le profileur vise. NE PAS reintroduire : un champ y revient
+// le jour ou un appelant reel le lit.
+
+// ---- struct GPUMetricsSnapshot ----
+    public struct GPUMetricsSnapshot
+    {
+        public DateTime Timestamp { get; set; }
+        public float FrameTimeGpuMs { get; set; }
+        public int DrawCallCount { get; set; }
+        public int BatchCount { get; set; }
+        public long TrisCount { get; set; }
+        public long VertexShaderInvocations { get; set; }
+        public long PixelShaderInvocations { get; set; }
+        public long MemoryUsedBytes { get; set; }
+        public int SkeletonCount { get; set; }
+        // Métriques GPU avancées
+        public float GPUCoreUtilization { get; set; }
+        public float GPUWarpOccupancy { get; set; }
+        public float GPUWaveOccupancy { get; set; }
+        public float GPUThreadOccupancy { get; set; }
+        public float GPUCacheHitRate { get; set; }
+        public float GPUCacheMissRate { get; set; }
+        public float GPUMemoryBandwidthUsage { get; set; }
+        public float GPUMemoryLatency { get; set; }
+        public float GPUMemoryFragmentation { get; set; }
+        public float GPUMemoryAllocationRate { get; set; }
+        public float GPUMemoryDeallocationRate { get; set; }
+        public long GPUMemoryPeakUsage { get; set; }
+        public float GPUMemoryBudgetUsage { get; set; }
+        public float GPUVRAMBudgetUsage { get; set; }
+        public long GPUVRAMPeakUsage { get; set; }
+        public float GPUVRAMFragmentation { get; set; }
+        public float GPUShaderCompilationTime { get; set; }
+        public float GPUShaderWarmupTime { get; set; }
+        public float GPUShaderCacheHitRate { get; set; }
+        public float GPUShaderCacheMissRate { get; set; }
+        public long GPUShaderInvocationCount { get; set; }
+        public long GPUComputeShaderInvocationCount { get; set; }
+        public long GPUVertexShaderInvocationCount { get; set; }
+        public long GPUPixelShaderInvocationCount { get; set; }
+        public long GPUHullShaderInvocationCount { get; set; }
+        public long GPUDomainShaderInvocationCount { get; set; }
+        public long GPUGeometryShaderInvocationCount { get; set; }
+        public float GPUAsyncComputeUsage { get; set; }
+        public int GPUAsyncComputeQueueDepth { get; set; }
+        public float GPUAsyncComputeLatency { get; set; }
+        public float GPUCopyQueueUsage { get; set; }
+        public float GPUCopyQueueLatency { get; set; }
+        public int GPUQueueStallCount { get; set; }
+        public float GPUQueueStallDuration { get; set; }
+        public string GPUFrameDependencyGraph { get; set; }
+        public string GPUFrameExecutionTimeline { get; set; }
+        public string GPUFrameExecutionHeatmap { get; set; }
+        public string GPUFrameExecutionTrend { get; set; }
+        public float GPUFrameExecutionBudget { get; set; }
+        public float GPUFrameExecutionVariance { get; set; }
+        // Animation & Skinning Profiling
+        public float SkinningPassTimeMs { get; set; }
+        public float SkinningComputeTimeMs { get; set; }
+        public long SkinningVertexCount { get; set; }
+        public int SkinningBoneCount { get; set; }
+        public float SkinningMatrixUploadTime { get; set; }
+        public float SkinningMatrixUploadBandwidth { get; set; }
+        public int SkinningMatrixUpdateCount { get; set; }
+        public int SkinningBatchCount { get; set; }
+        public float SkinningBatchSizeAvg { get; set; }
+        public int SkinningBatchSizeMax { get; set; }
+        public int SkinningBatchSizeMin { get; set; }
+        public long SkinningShaderInvocationCount { get; set; }
+        public long SkinningComputeShaderInvocationCount { get; set; }
+        public float SkinningComputeOccupancy { get; set; }
+        public float SkinningComputeWaveOccupancy { get; set; }
+        public float SkinningComputeWarpOccupancy { get; set; }
+        public long SkinningComputeMemoryUsage { get; set; }
+        public float SkinningComputeMemoryBandwidth { get; set; }
+        public float SkinningComputeMemoryLatency { get; set; }
+        public float SkinningComputeCacheHitRate { get; set; }
+        public float SkinningComputeCacheMissRate { get; set; }
+        public int SkinningComputeQueueDepth { get; set; }
+        public int SkinningComputeQueueStallCount { get; set; }
+        public float SkinningComputeQueueStallDuration { get; set; }
+        public float SkinningComputeFrameBudgetUsage { get; set; }
+        public float SkinningComputeFrameVariance { get; set; }
+        public string SkinningComputeFrameTrend { get; set; }
+        public string SkinningComputeFrameHeatmap { get; set; }
+        public string SkinningComputeFrameTimeline { get; set; }
+        public string SkinningComputeFrameDependencyGraph { get; set; }
+        // Async Compute
+        public float AsyncComputeQueueUsage { get; set; }
+        public int AsyncComputeQueueStallCount { get; set; }
+        public float AsyncComputeQueueStallDuration { get; set; }
+        public int AsyncComputeQueueDepth { get; set; }
+        public long AsyncComputeShaderInvocationCount { get; set; }
+        public float AsyncComputeOccupancy { get; set; }
+        public float AsyncComputeWaveOccupancy { get; set; }
+        public float AsyncComputeWarpOccupancy { get; set; }
+        public long AsyncComputeMemoryUsage { get; set; }
+
+        public GPUMetricsSnapshot(GPUMetricsSnapshot other)
+        {
+            Timestamp = other.Timestamp;
+            FrameTimeGpuMs = other.FrameTimeGpuMs;
+            DrawCallCount = other.DrawCallCount;
+            BatchCount = other.BatchCount;
+            TrisCount = other.TrisCount;
+            VertexShaderInvocations = other.VertexShaderInvocations;
+            PixelShaderInvocations = other.PixelShaderInvocations;
+            MemoryUsedBytes = other.MemoryUsedBytes;
+            SkeletonCount = other.SkeletonCount;
+            GPUCoreUtilization = other.GPUCoreUtilization;
+            GPUWarpOccupancy = other.GPUWarpOccupancy;
+            GPUWaveOccupancy = other.GPUWaveOccupancy;
+            GPUThreadOccupancy = other.GPUThreadOccupancy;
+            GPUCacheHitRate = other.GPUCacheHitRate;
+            GPUCacheMissRate = other.GPUCacheMissRate;
+            GPUMemoryBandwidthUsage = other.GPUMemoryBandwidthUsage;
+            GPUMemoryLatency = other.GPUMemoryLatency;
+            GPUMemoryFragmentation = other.GPUMemoryFragmentation;
+            GPUMemoryAllocationRate = other.GPUMemoryAllocationRate;
+            GPUMemoryDeallocationRate = other.GPUMemoryDeallocationRate;
+            GPUMemoryPeakUsage = other.GPUMemoryPeakUsage;
+            GPUMemoryBudgetUsage = other.GPUMemoryBudgetUsage;
+            GPUVRAMBudgetUsage = other.GPUVRAMBudgetUsage;
+            GPUVRAMPeakUsage = other.GPUVRAMPeakUsage;
+            GPUVRAMFragmentation = other.GPUVRAMFragmentation;
+            GPUShaderCompilationTime = other.GPUShaderCompilationTime;
+            GPUShaderWarmupTime = other.GPUShaderWarmupTime;
+            GPUShaderCacheHitRate = other.GPUShaderCacheHitRate;
+            GPUShaderCacheMissRate = other.GPUShaderCacheMissRate;
+            GPUShaderInvocationCount = other.GPUShaderInvocationCount;
+            GPUComputeShaderInvocationCount = other.GPUComputeShaderInvocationCount;
+            GPUVertexShaderInvocationCount = other.GPUVertexShaderInvocationCount;
+            GPUPixelShaderInvocationCount = other.GPUPixelShaderInvocationCount;
+            GPUHullShaderInvocationCount = other.GPUHullShaderInvocationCount;
+            GPUDomainShaderInvocationCount = other.GPUDomainShaderInvocationCount;
+            GPUGeometryShaderInvocationCount = other.GPUGeometryShaderInvocationCount;
+            GPUAsyncComputeUsage = other.GPUAsyncComputeUsage;
+            GPUAsyncComputeQueueDepth = other.GPUAsyncComputeQueueDepth;
+            GPUAsyncComputeLatency = other.GPUAsyncComputeLatency;
+            GPUCopyQueueUsage = other.GPUCopyQueueUsage;
+            GPUCopyQueueLatency = other.GPUCopyQueueLatency;
+            GPUQueueStallCount = other.GPUQueueStallCount;
+            GPUQueueStallDuration = other.GPUQueueStallDuration;
+            GPUFrameDependencyGraph = other.GPUFrameDependencyGraph;
+            GPUFrameExecutionTimeline = other.GPUFrameExecutionTimeline;
+            GPUFrameExecutionHeatmap = other.GPUFrameExecutionHeatmap;
+            GPUFrameExecutionTrend = other.GPUFrameExecutionTrend;
+            GPUFrameExecutionBudget = other.GPUFrameExecutionBudget;
+            GPUFrameExecutionVariance = other.GPUFrameExecutionVariance;
+            SkinningPassTimeMs = other.SkinningPassTimeMs;
+            SkinningComputeTimeMs = other.SkinningComputeTimeMs;
+            SkinningVertexCount = other.SkinningVertexCount;
+            SkinningBoneCount = other.SkinningBoneCount;
+            SkinningMatrixUploadTime = other.SkinningMatrixUploadTime;
+            SkinningMatrixUploadBandwidth = other.SkinningMatrixUploadBandwidth;
+            SkinningMatrixUpdateCount = other.SkinningMatrixUpdateCount;
+            SkinningBatchCount = other.SkinningBatchCount;
+            SkinningBatchSizeAvg = other.SkinningBatchSizeAvg;
+            SkinningBatchSizeMax = other.SkinningBatchSizeMax;
+            SkinningBatchSizeMin = other.SkinningBatchSizeMin;
+            SkinningShaderInvocationCount = other.SkinningShaderInvocationCount;
+            SkinningComputeShaderInvocationCount = other.SkinningComputeShaderInvocationCount;
+            SkinningComputeOccupancy = other.SkinningComputeOccupancy;
+            SkinningComputeWaveOccupancy = other.SkinningComputeWaveOccupancy;
+            SkinningComputeWarpOccupancy = other.SkinningComputeWarpOccupancy;
+            SkinningComputeMemoryUsage = other.SkinningComputeMemoryUsage;
+            SkinningComputeMemoryBandwidth = other.SkinningComputeMemoryBandwidth;
+            SkinningComputeMemoryLatency = other.SkinningComputeMemoryLatency;
+            SkinningComputeCacheHitRate = other.SkinningComputeCacheHitRate;
+            SkinningComputeCacheMissRate = other.SkinningComputeCacheMissRate;
+            SkinningComputeQueueDepth = other.SkinningComputeQueueDepth;
+            SkinningComputeQueueStallCount = other.SkinningComputeQueueStallCount;
+            SkinningComputeQueueStallDuration = other.SkinningComputeQueueStallDuration;
+            SkinningComputeFrameBudgetUsage = other.SkinningComputeFrameBudgetUsage;
+            SkinningComputeFrameVariance = other.SkinningComputeFrameVariance;
+            SkinningComputeFrameTrend = other.SkinningComputeFrameTrend;
+            SkinningComputeFrameHeatmap = other.SkinningComputeFrameHeatmap;
+            SkinningComputeFrameTimeline = other.SkinningComputeFrameTimeline;
+            SkinningComputeFrameDependencyGraph = other.SkinningComputeFrameDependencyGraph;
+            AsyncComputeQueueUsage = other.AsyncComputeQueueUsage;
+            AsyncComputeQueueStallCount = other.AsyncComputeQueueStallCount;
+            AsyncComputeQueueStallDuration = other.AsyncComputeQueueStallDuration;
+            AsyncComputeQueueDepth = other.AsyncComputeQueueDepth;
+            AsyncComputeShaderInvocationCount = other.AsyncComputeShaderInvocationCount;
+            AsyncComputeOccupancy = other.AsyncComputeOccupancy;
+            AsyncComputeWaveOccupancy = other.AsyncComputeWaveOccupancy;
+            AsyncComputeWarpOccupancy = other.AsyncComputeWarpOccupancy;
+            AsyncComputeMemoryUsage = other.AsyncComputeMemoryUsage;
+        }
+    }
+
+    
+
+// ---- CaptureMetrics() ----
+        public void CaptureMetrics()
+        {
+            if (_disposed) throw new ObjectDisposedException(GetType().Name);
+            if (!IsReady()) throw new InvalidOperationException("GPUProfilerHook must be ready before capturing metrics.");
+
+            // [PERFORMANCE] : Utiliser Stopwatch.GetTimestamp pour mesurer le budget
+            var startTimestamp = Stopwatch.GetTimestamp();
+            // [THREAD SAFETY] : Lecture de _config sous lock
+            float budgetMs;
+            lock (_configLock)
+            {
+                budgetMs = _config.CaptureBudgetMs;
+            }
+            var elapsedMs = (double)(Stopwatch.GetTimestamp() - startTimestamp) / Stopwatch.Frequency * 1000.0;
+            if (elapsedMs > budgetMs)
+            {
+                LogOrRaiseError("CaptureMetrics exceeded budget", "CaptureMetrics", new { BudgetMs = budgetMs, ElapsedMs = elapsedMs });
+                return;
+            }
+
+            var metrics = new GPUMetricsSnapshot
+            {
+                Timestamp = DateTime.UtcNow,
+                FrameTimeGpuMs = _renderEngine?.GetLastFrameTimeGpuMs() ?? 0f,
+                DrawCallCount = _renderEngine?.GetDrawCallCount() ?? 0,
+                BatchCount = _renderEngine?.GetBatchCount() ?? 0,
+                TrisCount = _renderEngine?.GetTriangleCount() ?? 0,
+                // [CORRECTION] : éviter la récursion infinie
+                // VertexShaderInvocations = GetEstimatedVertexShaderInvocations(), // Utiliser la valeur du snapshot précédent ou une estimation brute
+                VertexShaderInvocations = _lastMetrics.VertexShaderInvocations, // ou calculer sans GetMetricsSnapshot
+                PixelShaderInvocations = _renderEngine?.GetPixelShaderInvocationCount() ?? 0,
+                MemoryUsedBytes = _renderEngine?.GetVRAMUsageBytes() ?? 0,
+                SkeletonCount = GetEstimatedSkeletonCount(),
+                // --- Nouveaux champs ---
+                GPUCoreUtilization = _renderEngine?.GetGPUCoreUtilization() ?? 0f, // Hypothétique
+                GPUWarpOccupancy = _renderEngine?.GetGPUWarpOccupancy() ?? 0f, // Hypothétique
+                GPUWaveOccupancy = _renderEngine?.GetGPUWaveOccupancy() ?? 0f, // Hypothétique
+                GPUThreadOccupancy = _renderEngine?.GetGPUThreadOccupancy() ?? 0f, // Hypothétique
+                GPUCacheHitRate = _renderEngine?.GetGPUCacheHitRate() ?? 0f, // Hypothétique
+                GPUCacheMissRate = _renderEngine?.GetGPUCacheMissRate() ?? 0f, // Hypothétique
+                GPUMemoryBandwidthUsage = _renderEngine?.GetGPUMemoryBandwidthUsage() ?? 0f, // Hypothétique
+                GPUMemoryLatency = _renderEngine?.GetGPUMemoryLatency() ?? 0f, // Hypothétique
+                GPUMemoryFragmentation = _renderEngine?.GetGPUMemoryFragmentation() ?? 0f, // Hypothétique
+                GPUMemoryAllocationRate = _renderEngine?.GetGPUMemoryAllocationRate() ?? 0f, // Hypothétique
+                GPUMemoryDeallocationRate = _renderEngine?.GetGPUMemoryDeallocationRate() ?? 0f, // Hypothétique
+                GPUMemoryPeakUsage = _renderEngine?.GetGPUMemoryPeakUsage() ?? 0, // Hypothétique
+                GPUMemoryBudgetUsage = _renderEngine?.GetGPUMemoryBudgetUsage() ?? 0f, // Hypothétique
+                GPUVRAMBudgetUsage = _renderEngine?.GetGPUVRAMBudgetUsage() ?? 0f, // Hypothétique
+                GPUVRAMPeakUsage = _renderEngine?.GetGPUVRAMPeakUsage() ?? 0, // Hypothétique
+                GPUVRAMFragmentation = _renderEngine?.GetGPUVRAMFragmentation() ?? 0f, // Hypothétique
+                GPUShaderCompilationTime = _renderEngine?.GetGPUShaderCompilationTime() ?? 0f, // Hypothétique
+                GPUShaderWarmupTime = _renderEngine?.GetGPUShaderWarmupTime() ?? 0f, // Hypothétique
+                GPUShaderCacheHitRate = _renderEngine?.GetGPUShaderCacheHitRate() ?? 0f, // Hypothétique
+                GPUShaderCacheMissRate = _renderEngine?.GetGPUShaderCacheMissRate() ?? 0f, // Hypothétique
+                GPUShaderInvocationCount = _renderEngine?.GetGPUShaderInvocationCount() ?? 0, // Hypothétique
+                GPUComputeShaderInvocationCount = _renderEngine?.GetGPUComputeShaderInvocationCount() ?? 0, // Hypothétique
+                GPUVertexShaderInvocationCount = _renderEngine?.GetGPUVertexShaderInvocationCount() ?? 0, // Hypothétique
+                GPUPixelShaderInvocationCount = _renderEngine?.GetGPUPixelShaderInvocationCount() ?? 0, // Hypothétique
+                GPUHullShaderInvocationCount = _renderEngine?.GetGPUHullShaderInvocationCount() ?? 0, // Hypothétique
+                GPUDomainShaderInvocationCount = _renderEngine?.GetGPUDomainShaderInvocationCount() ?? 0, // Hypothétique
+                GPUGeometryShaderInvocationCount = _renderEngine?.GetGPUGeometryShaderInvocationCount() ?? 0, // Hypothétique
+                GPUAsyncComputeUsage = _renderEngine?.GetGPUAsyncComputeUsage() ?? 0f, // Hypothétique
+                GPUAsyncComputeQueueDepth = _renderEngine?.GetGPUAsyncComputeQueueDepth() ?? 0, // Hypothétique
+                GPUAsyncComputeLatency = _renderEngine?.GetGPUAsyncComputeLatency() ?? 0f, // Hypothétique
+                GPUCopyQueueUsage = _renderEngine?.GetGPUCopyQueueUsage() ?? 0f, // Hypothétique
+                GPUCopyQueueLatency = _renderEngine?.GetGPUCopyQueueLatency() ?? 0f, // Hypothétique
+                GPUQueueStallCount = _renderEngine?.GetGPUQueueStallCount() ?? 0, // Hypothétique
+                GPUQueueStallDuration = _renderEngine?.GetGPUQueueStallDuration() ?? 0f, // Hypothétique
+                GPUFrameDependencyGraph = _renderEngine?.GetGPUFrameDependencyGraph() ?? "", // Hypothétique
+                GPUFrameExecutionTimeline = _renderEngine?.GetGPUFrameExecutionTimeline() ?? "", // Hypothétique
+                GPUFrameExecutionHeatmap = _renderEngine?.GetGPUFrameExecutionHeatmap() ?? "", // Hypothétique
+                GPUFrameExecutionTrend = _renderEngine?.GetGPUFrameExecutionTrend() ?? "", // Hypothétique
+                GPUFrameExecutionBudget = _renderEngine?.GetGPUFrameExecutionBudget() ?? 0f, // Hypothétique
+                GPUFrameExecutionVariance = _renderEngine?.GetGPUFrameExecutionVariance() ?? 0f, // Hypothétique
+                // Animation & Skinning
+                SkinningPassTimeMs = _renderEngine?.GetSkinningPassTimeMs() ?? 0f, // Hypothétique
+                SkinningComputeTimeMs = _renderEngine?.GetSkinningComputeTimeMs() ?? 0f, // Hypothétique
+                SkinningVertexCount = _renderEngine?.GetSkinningVertexCount() ?? 0, // Hypothétique
+                SkinningBoneCount = _renderEngine?.GetSkinningBoneCount() ?? 0, // Hypothétique
+                SkinningMatrixUploadTime = _renderEngine?.GetSkinningMatrixUploadTime() ?? 0f, // Hypothétique
+                SkinningMatrixUploadBandwidth = _renderEngine?.GetSkinningMatrixUploadBandwidth() ?? 0f, // Hypothétique
+                SkinningMatrixUpdateCount = _renderEngine?.GetSkinningMatrixUpdateCount() ?? 0, // Hypothétique
+                SkinningBatchCount = _renderEngine?.GetSkinningBatchCount() ?? 0, // Hypothétique
+                SkinningBatchSizeAvg = _renderEngine?.GetSkinningBatchSizeAvg() ?? 0f, // Hypothétique
+                SkinningBatchSizeMax = _renderEngine?.GetSkinningBatchSizeMax() ?? 0, // Hypothétique
+                SkinningBatchSizeMin = _renderEngine?.GetSkinningBatchSizeMin() ?? 0, // Hypothétique
+                SkinningShaderInvocationCount = _renderEngine?.GetSkinningShaderInvocationCount() ?? 0, // Hypothétique
+                SkinningComputeShaderInvocationCount = _renderEngine?.GetSkinningComputeShaderInvocationCount() ?? 0, // Hypothétique
+                SkinningComputeOccupancy = _renderEngine?.GetSkinningComputeOccupancy() ?? 0f, // Hypothétique
+                SkinningComputeWaveOccupancy = _renderEngine?.GetSkinningComputeWaveOccupancy() ?? 0f, // Hypothétique
+                SkinningComputeWarpOccupancy = _renderEngine?.GetSkinningComputeWarpOccupancy() ?? 0f, // Hypothétique
+                SkinningComputeMemoryUsage = _renderEngine?.GetSkinningComputeMemoryUsage() ?? 0, // Hypothétique
+                SkinningComputeMemoryBandwidth = _renderEngine?.GetSkinningComputeMemoryBandwidth() ?? 0f, // Hypothétique
+                SkinningComputeMemoryLatency = _renderEngine?.GetSkinningComputeMemoryLatency() ?? 0f, // Hypothétique
+                SkinningComputeCacheHitRate = _renderEngine?.GetSkinningComputeCacheHitRate() ?? 0f, // Hypothétique
+                SkinningComputeCacheMissRate = _renderEngine?.GetSkinningComputeCacheMissRate() ?? 0f, // Hypothétique
+                SkinningComputeQueueDepth = _renderEngine?.GetSkinningComputeQueueDepth() ?? 0, // Hypothétique
+                SkinningComputeQueueStallCount = _renderEngine?.GetSkinningComputeQueueStallCount() ?? 0, // Hypothétique
+                SkinningComputeQueueStallDuration = _renderEngine?.GetSkinningComputeQueueStallDuration() ?? 0f, // Hypothétique
+                SkinningComputeFrameBudgetUsage = _renderEngine?.GetSkinningComputeFrameBudgetUsage() ?? 0f, // Hypothétique
+                SkinningComputeFrameVariance = _renderEngine?.GetSkinningComputeFrameVariance() ?? 0f, // Hypothétique
+                SkinningComputeFrameTrend = _renderEngine?.GetSkinningComputeFrameTrend() ?? "", // Hypothétique
+                SkinningComputeFrameHeatmap = _renderEngine?.GetSkinningComputeFrameHeatmap() ?? "", // Hypothétique
+                SkinningComputeFrameTimeline = _renderEngine?.GetSkinningComputeFrameTimeline() ?? "", // Hypothétique
+                SkinningComputeFrameDependencyGraph = _renderEngine?.GetSkinningComputeFrameDependencyGraph() ?? "", // Hypothétique
+                // Async Compute
+                AsyncComputeQueueUsage = _renderEngine?.GetAsyncComputeQueueUsage() ?? 0f, // Hypothétique
+                AsyncComputeQueueStallCount = _renderEngine?.GetAsyncComputeQueueStallCount() ?? 0, // Hypothétique
+                AsyncComputeQueueStallDuration = _renderEngine?.GetAsyncComputeQueueStallDuration() ?? 0f, // Hypothétique
+                AsyncComputeQueueDepth = _renderEngine?.GetAsyncComputeQueueDepth() ?? 0, // Hypothétique
+                AsyncComputeShaderInvocationCount = _renderEngine?.GetAsyncComputeShaderInvocationCount() ?? 0, // Hypothétique
+                AsyncComputeOccupancy = _renderEngine?.GetAsyncComputeOccupancy() ?? 0f, // Hypothétique
+                AsyncComputeWaveOccupancy = _renderEngine?.GetAsyncComputeWaveOccupancy() ?? 0f, // Hypothétique
+                AsyncComputeWarpOccupancy = _renderEngine?.GetAsyncComputeWarpOccupancy() ?? 0f, // Hypothétique
+                AsyncComputeMemoryUsage = _renderEngine?.GetAsyncComputeMemoryUsage() ?? 0, // Hypothétique
+            };
+
+            var animationMetrics = new AnimationRenderMetricsSnapshot
+            {
+                Timestamp = DateTime.UtcNow,
+                SkeletonCount = metrics.SkeletonCount,
+                SkinnedVertexCount = CalculateEstimatedSkinnedVertices(metrics.SkeletonCount),
+                SkinMatricesUpdates = _renderEngine?.GetSkinMatrixUpdateCount() ?? 0,
+                BlendShapeTargetsActive = _renderEngine?.GetActiveBlendShapeTargetCount() ?? 0
+            };
+
+            lock (_metricsLock)
+            {
+                _lastMetrics = metrics;
+                _lastAnimationMetrics = animationMetrics;
+                _metricsHistory.Enqueue(metrics);
+                _animationMetricsHistory.Enqueue(animationMetrics);
+            }
+
+            lock (_telemetryLock)
+            {
+                _telemetryBuffer.Enqueue(metrics, animationMetrics);
+            }
+
+            CheckForCriticalCost(metrics.FrameTimeGpuMs);
+            CheckForAnomalies(metrics);
+            TriggerAutoDumpsIfNeeded(metrics);
+
+            _capturesSucceeded++;
+        }
+
+        
+
+// ---- GetMetricsSnapshot() ----
+        public GPUMetricsSnapshot GetMetricsSnapshot()
+        {
+            if (_disposed) throw new ObjectDisposedException(GetType().Name);
+            lock (_metricsLock)
+            {
+                return new GPUMetricsSnapshot(_lastMetrics);
+            }
+        }
+
+        

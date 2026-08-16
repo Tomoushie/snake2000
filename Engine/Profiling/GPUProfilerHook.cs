@@ -154,8 +154,6 @@ namespace Engine.Profiling
         void SetCaptureInterval(float intervalMs);
         void SetSafeMode(bool enabled);
         void SetContinuousCapture(bool enabled);
-        void CaptureMetrics();
-        GPUMetricsSnapshot GetMetricsSnapshot();
         AnimationRenderMetricsSnapshot GetAnimationMetricsSnapshot();
         bool IsGPUCostCritical(float threshold = 16.0f);
         int GetEstimatedSkeletonCount();
@@ -306,6 +304,70 @@ namespace Engine.Profiling
         }
     }
 
+public struct AnimationRenderMetricsSnapshot
+    {
+        public DateTime Timestamp { get; set; }
+        public int SkeletonCount { get; set; }
+        public long SkinnedVertexCount { get; set; }
+        public int SkinMatricesUpdates { get; set; }
+        public int BlendShapeTargetsActive { get; set; }
+
+        public AnimationRenderMetricsSnapshot(AnimationRenderMetricsSnapshot other)
+        {
+            Timestamp = other.Timestamp;
+            SkeletonCount = other.SkeletonCount;
+            SkinnedVertexCount = other.SkinnedVertexCount;
+            SkinMatricesUpdates = other.SkinMatricesUpdates;
+            BlendShapeTargetsActive = other.BlendShapeTargetsActive;
+        }
+    }
+
+    public struct GPUProfilerLifecycleData
+    {
+        public DateTime InitializedAt { get; set; }
+        public DateTime StartedCapturingAt { get; set; }
+        public DateTime LastTransitionAt { get; set; }
+        public int TransitionCount { get; set; }
+        public int ErrorCount { get; set; }
+        public DateTime LastErrorAt { get; set; }
+        public string LastErrorMessage { get; set; }
+    }
+
+    public class GPUProfilerEventLog // [CORRECTION] : transformé en classe pour encapsulation
+    {
+        private readonly List<string> _events = new List<string>();
+        private readonly int _maxEvents;
+        private readonly object _lock = new object();
+
+        public GPUProfilerEventLog(int maxEvents = 1000)
+        {
+            _maxEvents = maxEvents;
+        }
+
+        public void AddEvent(string ev)
+        {
+            lock (_lock)
+            {
+                if (_events.Count >= _maxEvents) _events.RemoveAt(0);
+                _events.Add(ev);
+            }
+        }
+
+        public List<string> GetEvents()
+        {
+            lock (_lock)
+            {
+                return new List<string>(_events); // [OBSERVABILITE] : retourne une copie pour éviter la corruption
+            }
+        }
+    }
+    // GPUMetricsSnapshot est CONSERVE, mais plus rien ne le remplit.
+    // CaptureMetrics et GetMetricsSnapshot sont partis dans
+    // Docs/Intention/GPUMetricsSnapshot.cs.txt : la premiere appelait 88 getters
+    // de IRenderEngine qui n'existent pas, et cascadait en 612 erreurs ; la
+    // seconde n'avait aucun appelant. Le type reste parce que dix membres du
+    // fichier le manipulent encore — historique, diff, export — et que les
+    // retirer serait un lot a part entiere.
     public struct GPUMetricsSnapshot
     {
         public DateTime Timestamp { get; set; }
@@ -493,63 +555,6 @@ namespace Engine.Profiling
         }
     }
 
-    public struct AnimationRenderMetricsSnapshot
-    {
-        public DateTime Timestamp { get; set; }
-        public int SkeletonCount { get; set; }
-        public long SkinnedVertexCount { get; set; }
-        public int SkinMatricesUpdates { get; set; }
-        public int BlendShapeTargetsActive { get; set; }
-
-        public AnimationRenderMetricsSnapshot(AnimationRenderMetricsSnapshot other)
-        {
-            Timestamp = other.Timestamp;
-            SkeletonCount = other.SkeletonCount;
-            SkinnedVertexCount = other.SkinnedVertexCount;
-            SkinMatricesUpdates = other.SkinMatricesUpdates;
-            BlendShapeTargetsActive = other.BlendShapeTargetsActive;
-        }
-    }
-
-    public struct GPUProfilerLifecycleData
-    {
-        public DateTime InitializedAt { get; set; }
-        public DateTime StartedCapturingAt { get; set; }
-        public DateTime LastTransitionAt { get; set; }
-        public int TransitionCount { get; set; }
-        public int ErrorCount { get; set; }
-        public DateTime LastErrorAt { get; set; }
-        public string LastErrorMessage { get; set; }
-    }
-
-    public class GPUProfilerEventLog // [CORRECTION] : transformé en classe pour encapsulation
-    {
-        private readonly List<string> _events = new List<string>();
-        private readonly int _maxEvents;
-        private readonly object _lock = new object();
-
-        public GPUProfilerEventLog(int maxEvents = 1000)
-        {
-            _maxEvents = maxEvents;
-        }
-
-        public void AddEvent(string ev)
-        {
-            lock (_lock)
-            {
-                if (_events.Count >= _maxEvents) _events.RemoveAt(0);
-                _events.Add(ev);
-            }
-        }
-
-        public List<string> GetEvents()
-        {
-            lock (_lock)
-            {
-                return new List<string>(_events); // [OBSERVABILITE] : retourne une copie pour éviter la corruption
-            }
-        }
-    }
 
     public struct GPUProfilerCrashReport
     {
@@ -1011,7 +1016,6 @@ namespace Engine.Profiling
         private volatile GPUProfilerHookConfig _config;
 
         // Dernières métriques capturées
-        private GPUMetricsSnapshot _lastMetrics = new GPUMetricsSnapshot();
         private AnimationRenderMetricsSnapshot _lastAnimationMetrics = new AnimationRenderMetricsSnapshot();
 
         // Historique des métriques
@@ -1418,153 +1422,7 @@ namespace Engine.Profiling
         #endregion
 
         #region Capture & Metrics (Amélioré)
-        public void CaptureMetrics()
-        {
-            if (_disposed) throw new ObjectDisposedException(GetType().Name);
-            if (!IsReady()) throw new InvalidOperationException("GPUProfilerHook must be ready before capturing metrics.");
-
-            // [PERFORMANCE] : Utiliser Stopwatch.GetTimestamp pour mesurer le budget
-            var startTimestamp = Stopwatch.GetTimestamp();
-            // [THREAD SAFETY] : Lecture de _config sous lock
-            float budgetMs;
-            lock (_configLock)
-            {
-                budgetMs = _config.CaptureBudgetMs;
-            }
-            var elapsedMs = (double)(Stopwatch.GetTimestamp() - startTimestamp) / Stopwatch.Frequency * 1000.0;
-            if (elapsedMs > budgetMs)
-            {
-                LogOrRaiseError("CaptureMetrics exceeded budget", "CaptureMetrics", new { BudgetMs = budgetMs, ElapsedMs = elapsedMs });
-                return;
-            }
-
-            var metrics = new GPUMetricsSnapshot
-            {
-                Timestamp = DateTime.UtcNow,
-                FrameTimeGpuMs = _renderEngine?.GetLastFrameTimeGpuMs() ?? 0f,
-                DrawCallCount = _renderEngine?.GetDrawCallCount() ?? 0,
-                BatchCount = _renderEngine?.GetBatchCount() ?? 0,
-                TrisCount = _renderEngine?.GetTriangleCount() ?? 0,
-                // [CORRECTION] : éviter la récursion infinie
-                // VertexShaderInvocations = GetEstimatedVertexShaderInvocations(), // Utiliser la valeur du snapshot précédent ou une estimation brute
-                VertexShaderInvocations = _lastMetrics.VertexShaderInvocations, // ou calculer sans GetMetricsSnapshot
-                PixelShaderInvocations = _renderEngine?.GetPixelShaderInvocationCount() ?? 0,
-                MemoryUsedBytes = _renderEngine?.GetVRAMUsageBytes() ?? 0,
-                SkeletonCount = GetEstimatedSkeletonCount(),
-                // --- Nouveaux champs ---
-                GPUCoreUtilization = _renderEngine?.GetGPUCoreUtilization() ?? 0f, // Hypothétique
-                GPUWarpOccupancy = _renderEngine?.GetGPUWarpOccupancy() ?? 0f, // Hypothétique
-                GPUWaveOccupancy = _renderEngine?.GetGPUWaveOccupancy() ?? 0f, // Hypothétique
-                GPUThreadOccupancy = _renderEngine?.GetGPUThreadOccupancy() ?? 0f, // Hypothétique
-                GPUCacheHitRate = _renderEngine?.GetGPUCacheHitRate() ?? 0f, // Hypothétique
-                GPUCacheMissRate = _renderEngine?.GetGPUCacheMissRate() ?? 0f, // Hypothétique
-                GPUMemoryBandwidthUsage = _renderEngine?.GetGPUMemoryBandwidthUsage() ?? 0f, // Hypothétique
-                GPUMemoryLatency = _renderEngine?.GetGPUMemoryLatency() ?? 0f, // Hypothétique
-                GPUMemoryFragmentation = _renderEngine?.GetGPUMemoryFragmentation() ?? 0f, // Hypothétique
-                GPUMemoryAllocationRate = _renderEngine?.GetGPUMemoryAllocationRate() ?? 0f, // Hypothétique
-                GPUMemoryDeallocationRate = _renderEngine?.GetGPUMemoryDeallocationRate() ?? 0f, // Hypothétique
-                GPUMemoryPeakUsage = _renderEngine?.GetGPUMemoryPeakUsage() ?? 0, // Hypothétique
-                GPUMemoryBudgetUsage = _renderEngine?.GetGPUMemoryBudgetUsage() ?? 0f, // Hypothétique
-                GPUVRAMBudgetUsage = _renderEngine?.GetGPUVRAMBudgetUsage() ?? 0f, // Hypothétique
-                GPUVRAMPeakUsage = _renderEngine?.GetGPUVRAMPeakUsage() ?? 0, // Hypothétique
-                GPUVRAMFragmentation = _renderEngine?.GetGPUVRAMFragmentation() ?? 0f, // Hypothétique
-                GPUShaderCompilationTime = _renderEngine?.GetGPUShaderCompilationTime() ?? 0f, // Hypothétique
-                GPUShaderWarmupTime = _renderEngine?.GetGPUShaderWarmupTime() ?? 0f, // Hypothétique
-                GPUShaderCacheHitRate = _renderEngine?.GetGPUShaderCacheHitRate() ?? 0f, // Hypothétique
-                GPUShaderCacheMissRate = _renderEngine?.GetGPUShaderCacheMissRate() ?? 0f, // Hypothétique
-                GPUShaderInvocationCount = _renderEngine?.GetGPUShaderInvocationCount() ?? 0, // Hypothétique
-                GPUComputeShaderInvocationCount = _renderEngine?.GetGPUComputeShaderInvocationCount() ?? 0, // Hypothétique
-                GPUVertexShaderInvocationCount = _renderEngine?.GetGPUVertexShaderInvocationCount() ?? 0, // Hypothétique
-                GPUPixelShaderInvocationCount = _renderEngine?.GetGPUPixelShaderInvocationCount() ?? 0, // Hypothétique
-                GPUHullShaderInvocationCount = _renderEngine?.GetGPUHullShaderInvocationCount() ?? 0, // Hypothétique
-                GPUDomainShaderInvocationCount = _renderEngine?.GetGPUDomainShaderInvocationCount() ?? 0, // Hypothétique
-                GPUGeometryShaderInvocationCount = _renderEngine?.GetGPUGeometryShaderInvocationCount() ?? 0, // Hypothétique
-                GPUAsyncComputeUsage = _renderEngine?.GetGPUAsyncComputeUsage() ?? 0f, // Hypothétique
-                GPUAsyncComputeQueueDepth = _renderEngine?.GetGPUAsyncComputeQueueDepth() ?? 0, // Hypothétique
-                GPUAsyncComputeLatency = _renderEngine?.GetGPUAsyncComputeLatency() ?? 0f, // Hypothétique
-                GPUCopyQueueUsage = _renderEngine?.GetGPUCopyQueueUsage() ?? 0f, // Hypothétique
-                GPUCopyQueueLatency = _renderEngine?.GetGPUCopyQueueLatency() ?? 0f, // Hypothétique
-                GPUQueueStallCount = _renderEngine?.GetGPUQueueStallCount() ?? 0, // Hypothétique
-                GPUQueueStallDuration = _renderEngine?.GetGPUQueueStallDuration() ?? 0f, // Hypothétique
-                GPUFrameDependencyGraph = _renderEngine?.GetGPUFrameDependencyGraph() ?? "", // Hypothétique
-                GPUFrameExecutionTimeline = _renderEngine?.GetGPUFrameExecutionTimeline() ?? "", // Hypothétique
-                GPUFrameExecutionHeatmap = _renderEngine?.GetGPUFrameExecutionHeatmap() ?? "", // Hypothétique
-                GPUFrameExecutionTrend = _renderEngine?.GetGPUFrameExecutionTrend() ?? "", // Hypothétique
-                GPUFrameExecutionBudget = _renderEngine?.GetGPUFrameExecutionBudget() ?? 0f, // Hypothétique
-                GPUFrameExecutionVariance = _renderEngine?.GetGPUFrameExecutionVariance() ?? 0f, // Hypothétique
-                // Animation & Skinning
-                SkinningPassTimeMs = _renderEngine?.GetSkinningPassTimeMs() ?? 0f, // Hypothétique
-                SkinningComputeTimeMs = _renderEngine?.GetSkinningComputeTimeMs() ?? 0f, // Hypothétique
-                SkinningVertexCount = _renderEngine?.GetSkinningVertexCount() ?? 0, // Hypothétique
-                SkinningBoneCount = _renderEngine?.GetSkinningBoneCount() ?? 0, // Hypothétique
-                SkinningMatrixUploadTime = _renderEngine?.GetSkinningMatrixUploadTime() ?? 0f, // Hypothétique
-                SkinningMatrixUploadBandwidth = _renderEngine?.GetSkinningMatrixUploadBandwidth() ?? 0f, // Hypothétique
-                SkinningMatrixUpdateCount = _renderEngine?.GetSkinningMatrixUpdateCount() ?? 0, // Hypothétique
-                SkinningBatchCount = _renderEngine?.GetSkinningBatchCount() ?? 0, // Hypothétique
-                SkinningBatchSizeAvg = _renderEngine?.GetSkinningBatchSizeAvg() ?? 0f, // Hypothétique
-                SkinningBatchSizeMax = _renderEngine?.GetSkinningBatchSizeMax() ?? 0, // Hypothétique
-                SkinningBatchSizeMin = _renderEngine?.GetSkinningBatchSizeMin() ?? 0, // Hypothétique
-                SkinningShaderInvocationCount = _renderEngine?.GetSkinningShaderInvocationCount() ?? 0, // Hypothétique
-                SkinningComputeShaderInvocationCount = _renderEngine?.GetSkinningComputeShaderInvocationCount() ?? 0, // Hypothétique
-                SkinningComputeOccupancy = _renderEngine?.GetSkinningComputeOccupancy() ?? 0f, // Hypothétique
-                SkinningComputeWaveOccupancy = _renderEngine?.GetSkinningComputeWaveOccupancy() ?? 0f, // Hypothétique
-                SkinningComputeWarpOccupancy = _renderEngine?.GetSkinningComputeWarpOccupancy() ?? 0f, // Hypothétique
-                SkinningComputeMemoryUsage = _renderEngine?.GetSkinningComputeMemoryUsage() ?? 0, // Hypothétique
-                SkinningComputeMemoryBandwidth = _renderEngine?.GetSkinningComputeMemoryBandwidth() ?? 0f, // Hypothétique
-                SkinningComputeMemoryLatency = _renderEngine?.GetSkinningComputeMemoryLatency() ?? 0f, // Hypothétique
-                SkinningComputeCacheHitRate = _renderEngine?.GetSkinningComputeCacheHitRate() ?? 0f, // Hypothétique
-                SkinningComputeCacheMissRate = _renderEngine?.GetSkinningComputeCacheMissRate() ?? 0f, // Hypothétique
-                SkinningComputeQueueDepth = _renderEngine?.GetSkinningComputeQueueDepth() ?? 0, // Hypothétique
-                SkinningComputeQueueStallCount = _renderEngine?.GetSkinningComputeQueueStallCount() ?? 0, // Hypothétique
-                SkinningComputeQueueStallDuration = _renderEngine?.GetSkinningComputeQueueStallDuration() ?? 0f, // Hypothétique
-                SkinningComputeFrameBudgetUsage = _renderEngine?.GetSkinningComputeFrameBudgetUsage() ?? 0f, // Hypothétique
-                SkinningComputeFrameVariance = _renderEngine?.GetSkinningComputeFrameVariance() ?? 0f, // Hypothétique
-                SkinningComputeFrameTrend = _renderEngine?.GetSkinningComputeFrameTrend() ?? "", // Hypothétique
-                SkinningComputeFrameHeatmap = _renderEngine?.GetSkinningComputeFrameHeatmap() ?? "", // Hypothétique
-                SkinningComputeFrameTimeline = _renderEngine?.GetSkinningComputeFrameTimeline() ?? "", // Hypothétique
-                SkinningComputeFrameDependencyGraph = _renderEngine?.GetSkinningComputeFrameDependencyGraph() ?? "", // Hypothétique
-                // Async Compute
-                AsyncComputeQueueUsage = _renderEngine?.GetAsyncComputeQueueUsage() ?? 0f, // Hypothétique
-                AsyncComputeQueueStallCount = _renderEngine?.GetAsyncComputeQueueStallCount() ?? 0, // Hypothétique
-                AsyncComputeQueueStallDuration = _renderEngine?.GetAsyncComputeQueueStallDuration() ?? 0f, // Hypothétique
-                AsyncComputeQueueDepth = _renderEngine?.GetAsyncComputeQueueDepth() ?? 0, // Hypothétique
-                AsyncComputeShaderInvocationCount = _renderEngine?.GetAsyncComputeShaderInvocationCount() ?? 0, // Hypothétique
-                AsyncComputeOccupancy = _renderEngine?.GetAsyncComputeOccupancy() ?? 0f, // Hypothétique
-                AsyncComputeWaveOccupancy = _renderEngine?.GetAsyncComputeWaveOccupancy() ?? 0f, // Hypothétique
-                AsyncComputeWarpOccupancy = _renderEngine?.GetAsyncComputeWarpOccupancy() ?? 0f, // Hypothétique
-                AsyncComputeMemoryUsage = _renderEngine?.GetAsyncComputeMemoryUsage() ?? 0, // Hypothétique
-            };
-
-            var animationMetrics = new AnimationRenderMetricsSnapshot
-            {
-                Timestamp = DateTime.UtcNow,
-                SkeletonCount = metrics.SkeletonCount,
-                SkinnedVertexCount = CalculateEstimatedSkinnedVertices(metrics.SkeletonCount),
-                SkinMatricesUpdates = _renderEngine?.GetSkinMatrixUpdateCount() ?? 0,
-                BlendShapeTargetsActive = _renderEngine?.GetActiveBlendShapeTargetCount() ?? 0
-            };
-
-            lock (_metricsLock)
-            {
-                _lastMetrics = metrics;
-                _lastAnimationMetrics = animationMetrics;
-                _metricsHistory.Enqueue(metrics);
-                _animationMetricsHistory.Enqueue(animationMetrics);
-            }
-
-            lock (_telemetryLock)
-            {
-                _telemetryBuffer.Enqueue(metrics, animationMetrics);
-            }
-
-            CheckForCriticalCost(metrics.FrameTimeGpuMs);
-            CheckForAnomalies(metrics);
-            TriggerAutoDumpsIfNeeded(metrics);
-
-            _capturesSucceeded++;
-        }
-
-        private void CheckForCriticalCost(float frameTimeGpuMs)
+private void CheckForCriticalCost(float frameTimeGpuMs)
         {
             const float criticalThreshold = 16.0f; // ~60fps
             if (frameTimeGpuMs > criticalThreshold)
@@ -1689,16 +1547,7 @@ namespace Engine.Profiling
             }
         }
 
-        public GPUMetricsSnapshot GetMetricsSnapshot()
-        {
-            if (_disposed) throw new ObjectDisposedException(GetType().Name);
-            lock (_metricsLock)
-            {
-                return new GPUMetricsSnapshot(_lastMetrics);
-            }
-        }
-
-        public AnimationRenderMetricsSnapshot GetAnimationMetricsSnapshot()
+public AnimationRenderMetricsSnapshot GetAnimationMetricsSnapshot()
         {
             if (_disposed) throw new ObjectDisposedException(GetType().Name);
             lock (_metricsLock)
@@ -2745,6 +2594,19 @@ namespace Engine.Profiling
                     AverageLoad = 0f,
                     ReportTime = DateTime.UtcNow
                 };
+            }
+        }
+
+        // Retabli : j'avais conclu qu'il n'avait aucun appelant en cherchant
+        // `.GetMetricsSnapshot(`, or les appels INTERNES a la classe ne sont pas
+        // qualifies. Il y en a onze. Le grep pointe ne voit que les appels
+        // externes — mesurer aussi la forme nue.
+        public GPUMetricsSnapshot GetMetricsSnapshot()
+        {
+            if (_disposed) throw new ObjectDisposedException(GetType().Name);
+            lock (_metricsLock)
+            {
+                return new GPUMetricsSnapshot(_lastMetrics);
             }
         }
 

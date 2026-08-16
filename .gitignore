@@ -20,3 +20,8 @@ Tools/diag_erreurs.txt
 
 # Historique local de l editeur.
 .history/
+
+# Sortie du projet de mesure Tools/Build-complet.csproj
+Tools/obj-mesure/
+Tools/obj/
+Tools/bin/

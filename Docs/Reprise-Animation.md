@@ -14,20 +14,39 @@ Mesuré avec `python Tools/diagnostic.py Engine Game` :
 | après la session « IAnimationEngine » | 77 | 509 |
 | **maintenant** | **80** | **41** |
 
-**Les 41 erreurs restantes sont toutes des `CS0246`, et toutes délibérées.**
-Un seul code d'erreur subsiste dans tout le dépôt ; `CS0102`, `CS0535`,
-`CS0050`, `CS0539`, `CS0234` et `CS0677` ont disparu.
+## Le chiffre de ce compteur est un PLANCHER, pas un état
 
-| fichier | erreurs | pourquoi elles restent |
-|---|---|---|
-| `Engine/Animation/DummyAnimationEngine.cs` | 38 | huit types qui n'apparaissent qu'**en signature** |
-| `Engine/Rendering/IRenderPipeline.cs` | 2 | `IRenderPipelineBuilder`, `RenderPipelineSnapshot` — idem |
-| `Engine/Audio/IAudioEngine.cs` | 1 | `Note` — `PlaySequence(Note[])` sans appelant |
+C'est la chose la plus importante à savoir avant de reprendre, et elle a été
+découverte le 17 août 2026.
 
-**Ne pas les « corriger » sans mesurer d'abord.** Chacun de ces types ne nomme
-aucun membre : les déclarer produirait des coquilles vides. Ce sont des erreurs
-nommées, pas un manque masqué. Elles disparaîtront le jour où un appelant réel
-dictera un contenu.
+**Roslyn s'arrête après l'étape de déclaration quand celle-ci échoue.** Tant
+qu'une seule `CS0246` subsiste, les erreurs de **corps de méthode** ne sont
+jamais publiées. `Tools/diagnostic.py` partage cet angle mort : il compile et
+compte de la même façon.
+
+La démonstration est nette. Trois membres sans appelant restaient, référençant
+des types absents. En retirer **un seul** laissait 1 à 2 erreurs. En retirer
+**les deux derniers** en a fait apparaître **629**.
+
+| ce qu'on mesure | erreurs |
+|---|---|
+| le dépôt aujourd'hui (`dotnet build Tools/Build-complet.csproj`) | **38** |
+| … une fois `DummyAnimationEngine.cs` exclu | **593 distinctes** |
+
+Les 593 : 246 `CS1061` (membre inexistant), 149 `CS0103` (nom inexistant),
+53 `CS0117`, 24 `CS1729` (constructeur absent). Concentrées sur
+`GPUProfilerHook` (93), `ThreadAffinityManager` (79),
+`AnimationEngineStubOrchestrator` (67), le bridge (64).
+
+**`Tools/Build-complet.csproj` existe pour ça** : il compile tout le dépôt —
+`Snake2000.cs`, `Engine`, `Game`, `AI`, `Systems` — là où
+`Snake2000App.csproj` ne référence que `Snake2000.cs`. C'est le seul moyen de
+connaître l'état réel.
+
+Ce qui reste vrai malgré tout : les 38 erreurs actuelles sont **délibérées**.
+Ce sont huit types de `DummyAnimationEngine` qui n'apparaissent qu'en
+signature ; les déclarer produirait des coquilles vides. Mais elles ne sont plus
+le bout du chemin — elles sont le paravent.
 
 ## La règle qui a tranché quatre fois
 

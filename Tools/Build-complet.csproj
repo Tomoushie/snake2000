@@ -1,0 +1,51 @@
+<!--
+  Projet de MESURE, pas de livraison.
+
+  Il compile tout ce que le depot contient — Snake2000.cs, Engine, Game, AI,
+  Systems — la ou Snake2000App/Snake2000App.csproj ne reference que
+  Snake2000.cs. Il ne produit pas d'executable : OutputType Library, parce
+  qu'on cherche des erreurs, pas un binaire.
+
+  POURQUOI IL EXISTE, et c'est la raison importante :
+
+  Tools/diagnostic.py compte les erreurs de DECLARATION. Roslyn s'arrete a
+  cette etape quand elle echoue, et ne publie JAMAIS les erreurs de corps de
+  methode tant qu'une seule CS0246 subsiste. Mesure le 17 aout 2026 : le
+  compteur affichait 41 erreurs ; en retirant les trois dernieres references a
+  des types absents, il en est apparu 593 — 246 CS1061 (membre inexistant),
+  149 CS0103 (nom inexistant), concentrees sur GPUProfilerHook,
+  ThreadAffinityManager et AnimationEngineStubOrchestrator.
+
+  Autrement dit : tant que le diagnostic affiche des CS0246, son total est un
+  PLANCHER, pas un etat. Passer par ici pour connaitre le vrai chiffre :
+
+      dotnet build Tools/Build-complet.csproj -v q
+
+  (un commentaire XML ne peut pas contenir deux tirets consecutifs, d'ou
+  l'absence de l'option nologo dans la ligne ci-dessus.)
+
+  Les avertissements de nullabilite sont tus : le code n'a jamais ete ecrit
+  sous `Nullable`, et 105 avertissements a ce sujet noieraient les erreurs.
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <NoWarn>CS8632;CS8618;CS8600;CS8602;CS8603;CS8604;CS8625</NoWarn>
+    <BaseOutputPath>$(MSBuildThisFileDirectory)obj-mesure\</BaseOutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\Snake2000.cs" />
+    <Compile Include="..\Engine\**\*.cs" />
+    <Compile Include="..\Game\**\*.cs" />
+    <Compile Include="..\AI\**\*.cs" />
+    <Compile Include="..\Systems\**\*.cs" />
+  </ItemGroup>
+
+</Project>

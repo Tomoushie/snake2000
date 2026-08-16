@@ -36,6 +36,14 @@ public struct MovementComponent : IComponent, IReusableComponent
     public float Balance { get; set; } = 1.0f;
     public float Traction { get; set; } = 1.0f;
     public float TractionLoss { get; set; } = 0.0f;
+
+    // Requis des lors qu'un struct porte des initialiseurs de champ (CS8983).
+    // Vide : ce sont les initialiseurs ci-dessus qui s'executent.
+    public MovementComponent() { }
+
+    // Reaffecter une instance neuve evite de recopier vingt-cinq lignes de
+    // valeurs par defaut -- et d'en oublier une au prochain champ ajoute.
+    public void Reset() => this = new MovementComponent();
 }
 
 public struct MovementStateComponent : IComponent, IReusableComponent
@@ -44,6 +52,10 @@ public struct MovementStateComponent : IComponent, IReusableComponent
     public Vector2 DesiredVelocity { get; set; } = Vector2.Zero;
     public bool IsSlipping { get; set; } = false;
     public float SlipRecoveryTimer { get; set; } = 0.0f;
+
+    public MovementStateComponent() { }
+
+    public void Reset() => this = new MovementStateComponent();
 }
 
 public enum MovementState

@@ -1666,14 +1666,8 @@ namespace Engine.Rendering
     }
 
     // [CORRECTION] Nouvelles interfaces
-    public interface IRenderDevice
-    {
-        string DeviceName { get; }
-        string DriverVersion { get; }
-        bool IsLost { get; }
-        bool TryRecover();
-        void WaitForIdle();
-    }
+    // IRenderDevice est declare dans Engine/Rendering/IRenderPipeline.cs,
+    // foyer de l'espace de noms Engine.Rendering.
 
     public interface IRenderBackend
     {
@@ -1683,12 +1677,8 @@ namespace Engine.Rendering
         void Present();
     }
 
-    public interface IRenderPipeline
-    {
-        string Name { get; }
-        void Build(IRenderGraphBuilder builder);
-        void Execute();
-    }
+    // IRenderPipeline est declare dans Engine/Rendering/IRenderPipeline.cs,
+    // ou la version complete porte deja Name et Execute.
 
     public interface IRenderGraphBuilder
     {

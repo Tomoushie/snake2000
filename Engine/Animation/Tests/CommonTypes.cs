@@ -38,7 +38,7 @@ namespace Engine.Animation.Test
     public enum AlertPriority
     {
         Low,
-        Medium,
+        Normal,
         High,
         Urgent
     }

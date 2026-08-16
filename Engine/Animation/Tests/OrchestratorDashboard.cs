@@ -100,21 +100,7 @@ namespace Engine.Animation.Test
         public string Source { get; set; }
     }
 
-    public enum AlertSeverity
-    {
-        Information,
-        Warning,
-        Error,
-        Critical
-    }
-
-    public enum AlertPriority
-    {
-        Low,
-        Normal,
-        High,
-        Urgent
-    }
+    // AlertSeverity et AlertPriority sont declares dans Tests/CommonTypes.cs.
 
     #endregion
 

@@ -421,7 +421,15 @@ namespace Engine.Rendering
     // Exemples de types qui devront être définis ailleurs
     public interface IRenderPipelineConfig { }
     public interface IReadOnlyRenderPipelineConfig { }
-    public interface IRenderDevice { }
+    public interface IRenderDevice
+    {
+        string DeviceName { get; }
+        string DriverVersion { get; }
+        bool IsLost { get; }
+        bool TryRecover();
+        void WaitForIdle();
+    }
+
     public interface IRenderScene { }
     public interface IRenderTarget { }
     public interface IRenderPass { }

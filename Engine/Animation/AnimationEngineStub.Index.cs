@@ -49,13 +49,7 @@ namespace Engine.Animation
         AsyncBased
     }
 
-    public enum DiagnosticsLevel
-    {
-        None,
-        Basic,
-        Verbose,
-        Full
-    }
+    // DiagnosticsLevel est declare dans AnimationEngineStub.Diagnostics.cs.
 
     // [AJOUT] Attributs pour la découverte
     [AttributeUsage(AttributeTargets.Class)]

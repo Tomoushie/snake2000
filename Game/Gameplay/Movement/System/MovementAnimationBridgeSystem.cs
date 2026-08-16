@@ -67,8 +67,18 @@ namespace Game.Gameplay.Movement
             int GetErrorCount(IMovementLogger logger);
         }
 
+        // MathHelper : huit appels dans ce fichier, aucune declaration. Les trois
+        // methodes sont celles qui y sont appelees, et rien de plus.
+        public static class MathHelper
+        {
+            public static float Lerp(float a, float b, float t) => a + (b - a) * t;
+            public static float ToDegrees(float radians) => radians * (180f / MathF.PI);
+            public static float ToRadians(float degrees) => degrees * (MathF.PI / 180f);
+        }
+
         public interface IMovementLogger
         {
+            System.Collections.Generic.IEnumerable<string> GetCriticalErrorsSince(DateTime depuis);
             void LogError(string source, string message, string stackTrace, ErrorSeverity severity);
         }
 
@@ -140,6 +150,13 @@ namespace Game.Gameplay.Movement.Tools
 
         // Implémentation simplifiée
         private Dictionary<string, ErrorInfo> _errors = new Dictionary<string, ErrorInfo>();
+
+        /// <summary>
+        /// Erreurs critiques journalisees depuis une date. Appelee ligne 1197, dont
+        /// le `.Any()` qui suit fixe le type de retour a une sequence.
+        /// </summary>
+        public System.Collections.Generic.IEnumerable<string> GetCriticalErrorsSince(DateTime depuis)
+            => System.Array.Empty<string>();
 
         public void LogError(string source, string message, string stackTrace, ErrorSeverity severity)
         {

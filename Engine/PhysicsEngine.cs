@@ -66,6 +66,7 @@ public struct RigidBodyComponent : IComponent
     public Vector2 Acceleration { get; set; }
     public float Mass { get; set; }
     public float InverseMass => Mass > 0 ? 1.0f / Mass : 0.0f; // Utile pour les calculs
+    public Vector2 GroundNormal { get; set; } // lu par le bridge via Vector2.Dot
     public float Restitution { get; set; } // Rebond
     public float Friction { get; set; } // Frottement
     public bool IsStatic { get; set; } // Si vrai, ne subit pas les forces

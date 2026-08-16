@@ -31,7 +31,7 @@ des types absents. En retirer **un seul** laissait 1 à 2 erreurs. En retirer
 | ce qu'on mesure | erreurs |
 |---|---|
 | le dépôt (`dotnet build Tools/Build-complet.csproj`) | **38** |
-| … avec `-p:SansStub=true` | **466 distinctes** (593 en début de journée) |
+| … avec `-p:SansStub=true` | **375 distinctes** (593 le 17 août au matin) |
 
 **Deux erreurs de mesure commises le 17 août, à ne pas refaire :**
 
@@ -43,6 +43,14 @@ des types absents. En retirer **un seul** laissait 1 à 2 erreurs. En retirer
 - Chercher `.Methode(` ne trouve **que les appels externes**. Les appels
   internes à une classe ne sont pas qualifiés. `GetMetricsSnapshot` semblait
   sans appelant ; il en avait onze.
+
+Le premier piège s'est présenté **trois fois** en une journée, et la dernière
+fois le compteur affichait **1** erreur pour 375 réelles. Le réflexe à prendre :
+si le total s'effondre après un lot, regarder le CODE de l'erreur restante.
+`CS0246`, `CS0234`, `CS0535`, `CS0539` sont des erreurs de **déclaration** — une
+seule suffit à tout masquer. `CS0103`, `CS1061`, `CS0117`, `CS1729` sont des
+erreurs de **corps** : celles-là ne s'affichent que lorsque la déclaration est
+entièrement propre, et leur nombre est donc le vrai.
 
 Les 466 : 149 `CS0103` (nom inexistant), 121 `CS1061` (membre inexistant),
 30 `CS0311`, 24 `CS1729` (constructeur absent). Par fichier :

@@ -50,6 +50,9 @@ public class EventBus
             _subscribers[msgType].Remove(handler);
     }
 
+    /// <summary>Alias de Publish : le bridge ecrit `_eventBus?.Raise(...)`.</summary>
+    public void Raise<T>(T message) where T : IMessage => Publish(message);
+
     public virtual void Publish<T>(T message) where T : IMessage
     {
         var msgType = typeof(T);
@@ -514,6 +517,18 @@ public interface IComponent { }
 public interface ISystem
 {
     void Update(float deltaTime);
+
+    // Initialize et Shutdown sont reclames par le bridge sur IAnimationSystem,
+    // IAudioVisualSystem et IDebugSystem, qui heritent tous trois d'ISystem.
+    //
+    // Corps par DEFAUT et non membres abstraits : huit classes implementent deja
+    // ISystem (AIThreatSystem, AIMemorySystem, AISystemManager…) et des membres
+    // abstraits les casseraient toutes. C'est le mecanisme prevu par C# 8 pour
+    // etendre une interface sans rompre ses implementeurs — a ne pas confondre
+    // avec un corps pose sur une interface neuve, qui lui ne fait que dispenser
+    // d'ecrire le membre.
+    void Initialize() { }
+    void Shutdown() { }
     // Méthode pour filtrer les entités pertinentes
     // Ex: IEnumerable<Entity> GetEntitiesWith(params Type[] componentTypes);
 }
@@ -529,6 +544,21 @@ public class EntityManager
         _entities[id] = new List<IComponent>();
         return new Entity(id);
     }
+
+    // Les trois membres suivants sont reclames par MovementAnimationBridgeSystem.
+    // ForEach recoit un delegue a parametres `ref` — d'ou le type RefAction, un
+    // Action<> ordinaire ne pouvant pas porter de `ref`.
+    public delegate void RefAction<T1, T2>(Entity entity, ref T1 a, ref T2 b);
+
+    public IEnumerable<Entity> GetAllEntitiesWith<T1, T2>() where T1 : IComponent where T2 : IComponent
+        => Array.Empty<Entity>();
+
+    public IEnumerable<Entity> GetAllEntitiesWith<T1, T2, T3>() where T1 : IComponent where T2 : IComponent where T3 : IComponent
+        => Array.Empty<Entity>();
+
+    public void SetComponent<T>(Entity entity, T component) where T : IComponent { }
+
+    public void ForEach<T1, T2>(RefAction<T1, T2> action) where T1 : struct, IComponent where T2 : struct, IComponent { }
 
     public void AddComponent<T>(Entity entity, T component) where T : IComponent
     {

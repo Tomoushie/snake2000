@@ -1,6 +1,7 @@
 // /Engine/Animation/Test/OrchestratorDashboard.cs
 using System;
 using System.Collections.Generic;
+using System.Drawing;   // Point, utilise par la propriete Position ligne 82
 using System.IO;
 using System.Linq;
 using System.Text.Json;

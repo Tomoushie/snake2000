@@ -16,11 +16,11 @@ using System.Runtime.Serialization;
 using System.Security;
 using System.Net.Http; // Pour AnimationAssetCDNStub
 using Engine.Core;
-using Engine.Services;
-using Engine.Events;
+using Snake2000.Engine.Core;   // EventBus, Profiler, ResourceManager
+// Engine.Events, Engine.Services, Engine.Jobs et Engine.Resources sont partis :
+// aucun de ces espaces de noms n'existe dans le depot. Ils designaient une
+// organisation prevue et jamais creee, et coutaient un CS0234 chacun.
 using Engine.Profiling;
-using Engine.Jobs;
-using Engine.Resources;
 using Engine.Rendering; // Pour IRenderPipeline
 
 namespace Engine.Animation

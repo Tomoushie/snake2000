@@ -10,11 +10,11 @@ using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
 using Engine.Core;
-using Engine.Services;
-using Engine.Events;
+using Snake2000.Engine.Core;   // EventBus, Profiler, ResourceManager
+// Engine.Events, Engine.Services, Engine.Jobs et Engine.Resources sont partis :
+// aucun de ces espaces de noms n'existe dans le depot. Ils designaient une
+// organisation prevue et jamais creee, et coutaient un CS0234 chacun.
 using Engine.Profiling;
-using Engine.Jobs;
-using Engine.Resources;
 using Engine.Rendering;
 
 namespace Engine.Animation

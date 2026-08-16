@@ -568,13 +568,18 @@ public class EntityManager
         }
     }
 
-    public T GetComponent<T>(Entity entity) where T : class, IComponent
+    // La contrainte etait `where T : class, IComponent` — fausse par construction :
+    // dans cet ECS les composants sont des STRUCTS (MovementComponent,
+    // RigidBodyComponent, AnimationStateComponent…). Tout appel avec un composant
+    // reel donnait un CS0452. `return default` remplace `return null`, qui n'a plus
+    // de sens sans la contrainte.
+    public T GetComponent<T>(Entity entity) where T : IComponent
     {
         if (_entities.TryGetValue(entity.Id, out var components))
         {
             return components.OfType<T>().FirstOrDefault();
         }
-        return null;
+        return default;
     }
 
     public void DestroyEntity(Entity entity)

@@ -55,6 +55,10 @@ namespace Engine.Jobsystem
         private readonly INativeAffinityProvider _nativeProvider;
 
         // État du gestionnaire
+        // Lu et ecrit DIRECTEMENT, sans Volatile.Read/Write : ces deux methodes
+        // generiques exigent `where T : class`, et une enum n'est pas un type
+        // reference — c'etait le CS0452. Le champ etant deja `volatile`, l'acces
+        // direct porte exactement la meme garantie de visibilite entre threads.
         private volatile ThreadAffinityManagerState _state;
         private volatile ThreadAffinityManagerConfig _config;
         private readonly CategoryAffinityMap _affinityMap;
@@ -114,7 +118,7 @@ namespace Engine.Jobsystem
 
         #region Properties
 
-        public ThreadAffinityManagerState State => Volatile.Read(ref _state);
+        public ThreadAffinityManagerState State => _state;
         public ThreadAffinityManagerConfig Config => Volatile.Read(ref _config);
         public CategoryAffinityMap AffinityMap => GetAffinityMapThreadSafe();
         public ThreadLoadDistribution LoadDistribution => GetLoadDistributionThreadSafe();
@@ -170,11 +174,11 @@ namespace Engine.Jobsystem
                 InitializePlatformSpecificFeatures();
                 StartLoadMonitoring();
                 NotifyInitialized();
-                Volatile.Write(ref _state, ThreadAffinityManagerState.Ready);
+                _state = ThreadAffinityManagerState.Ready;
             }
             catch (Exception ex)
             {
-                Volatile.Write(ref _state, ThreadAffinityManagerState.Error);
+                _state = ThreadAffinityManagerState.Error;
                 LogOrRaiseError(ex.Message, "Initialize", null, ex);
                 throw;
             }
@@ -205,11 +209,11 @@ namespace Engine.Jobsystem
                 InitializePlatformSpecificFeatures();
                 await StartLoadMonitoringAsync(); // Nouveau
                 await NotifyInitializedAsync(); // Nouveau
-                Volatile.Write(ref _state, ThreadAffinityManagerState.Ready);
+                _state = ThreadAffinityManagerState.Ready;
             }
             catch (Exception ex)
             {
-                Volatile.Write(ref _state, ThreadAffinityManagerState.Error);
+                _state = ThreadAffinityManagerState.Error;
                 LogOrRaiseError(ex.Message, "InitializeAsync", null, ex);
                 throw;
             }
@@ -220,7 +224,7 @@ namespace Engine.Jobsystem
             if (_disposed) throw new ObjectDisposedException(GetType().Name);
             if (!IsRunning()) return;
 
-            Volatile.Write(ref _state, ThreadAffinityManagerState.Rebalancing);
+            _state = ThreadAffinityManagerState.Rebalancing;
 
             try
             {
@@ -246,7 +250,7 @@ namespace Engine.Jobsystem
             }
             finally
             {
-                Volatile.Write(ref _state, ThreadAffinityManagerState.Running);
+                _state = ThreadAffinityManagerState.Running;
             }
         }
 
@@ -274,7 +278,7 @@ namespace Engine.Jobsystem
             }
             finally
             {
-                Volatile.Write(ref _state, ThreadAffinityManagerState.Shutdown);
+                _state = ThreadAffinityManagerState.Shutdown;
             }
         }
 

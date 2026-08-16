@@ -12,7 +12,9 @@ namespace Engine.Animation
     // Q. Sécurité, stabilité, résilience (implémentations conceptuelles)
     public class AnimationWatchdog
     {
-        private readonly Timer _timer;
+        // Construit `new Timer(CheckResponsiveness, null, TimeSpan, TimeSpan)` :
+        // celui de Threading, pas celui de Forms.
+        private readonly System.Threading.Timer _timer;
         private readonly object _lock = new object();
         private bool _isResponsive = true;
 

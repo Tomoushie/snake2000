@@ -244,7 +244,11 @@ namespace Engine.Animation
         private readonly Dictionary<string, AnimationPose> _currentPoses = new Dictionary<string, AnimationPose>();
         private readonly List<string> _activeAnimations = new List<string>();
         private readonly Random _random = new Random();
-        private readonly Timer _stateWatchdogTimer; // Pour détecter les blocages
+        // Timer QUALIFIE : System.Windows.Forms et System.Threading en declarent
+        // chacun un, et UseWindowsForms les rend tous deux visibles — CS0104.
+        // Celui-ci est construit `new Timer(WatchdogCallback, null, ...)` et pilote
+        // par `.Change(intervalMs, intervalMs)` : c'est celui de Threading.
+        private readonly System.Threading.Timer _stateWatchdogTimer; // Pour détecter les blocages
         // A. Optimisation et structure : Utilisation de ConcurrentBag pour les logs (thread-safe)
         private readonly ConcurrentBag<string> _callLog = new ConcurrentBag<string>();
         private bool _enableCallLogging = false;

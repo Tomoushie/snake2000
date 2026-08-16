@@ -7,7 +7,9 @@ namespace Snake2000.Systems
 {
     public class HitStopSystem
     {
-        private readonly Timer _hitStopTimer;
+        // Construit `new Timer { Interval = 16 }` puis pilote par `.Tick`, `.Start()`
+        // et `.Stop()` : celui de Forms, contrairement aux deux du moteur.
+        private readonly System.Windows.Forms.Timer _hitStopTimer;
         private bool _isHitStopping;
         private float _remainingTimeMs;
         private readonly IEventBus _eventBus;

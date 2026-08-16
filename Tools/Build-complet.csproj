@@ -40,9 +40,22 @@
     <BaseOutputPath>$(MSBuildThisFileDirectory)obj-mesure\</BaseOutputPath>
   </PropertyGroup>
 
+  <!--
+    SansStub=true exclut Engine/Animation/DummyAnimationEngine.cs.
+
+    Ses 38 CS0246 sont deliberees, mais elles suffisent a faire echouer l'etape
+    de declaration, donc a masquer TOUTES les erreurs de corps de methode du
+    depot. L'exclure est le seul moyen de voir l'etat reel :
+
+        dotnet build Tools/Build-complet.csproj -v q -p:SansStub=true
+  -->
+  <PropertyGroup Condition="'$(SansStub)' == 'true'">
+    <ExclusionStub>..\Engine\Animation\DummyAnimationEngine.cs</ExclusionStub>
+  </PropertyGroup>
+
   <ItemGroup>
     <Compile Include="..\Snake2000.cs" />
-    <Compile Include="..\Engine\**\*.cs" />
+    <Compile Include="..\Engine\**\*.cs" Exclude="$(ExclusionStub)" />
     <Compile Include="..\Game\**\*.cs" />
     <Compile Include="..\AI\**\*.cs" />
     <Compile Include="..\Systems\**\*.cs" />

@@ -78,6 +78,11 @@ l'original soit vidé.
 | `Engine.Animation.Test` | `AlertPriority`, `AlertSeverity` | `Tests/CommonTypes.cs` + `Tests/OrchestratorDashboard.cs` |
 | `Engine.Rendering` | `IRenderDevice` | `Animation/IRenderEngine.cs` + `Rendering/IRenderPipeline.cs` |
 
+La même paire de fichiers produit aussi un `CS0260` — modificateur `partial`
+manquant sur `IRenderPipeline`, déclaré des deux côtés. Ajouter `partial`
+masquerait la duplication au lieu de la trancher : à traiter avec les sept
+`CS0101` ci-dessus, en décidant quel fichier garde la déclaration.
+
 `python Tools/doublons.py` donne la liste complète et à jour.
 
 ### Deux conventions d'espaces de noms cohabitent

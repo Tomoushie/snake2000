@@ -234,6 +234,11 @@ namespace Game.Gameplay.Movement.Components
 
     public struct MovementComponent : IComponent, IReusableComponent
     {
+        // Contrat IReusableComponent : remise a zero avant reutilisation par le
+        // pool. Sur un struct, `this = default` remet TOUS les champs a leur valeur
+        // par defaut — rien ne peut etre oublie quand un champ est ajoute plus tard.
+        public void Reset() => this = default;
+
         // ... (garder tous les champs existants et ajoutés précédemment) ...
         public float BaseSpeed; public float CurrentSpeed; public float Acceleration; public float BaseDeceleration; public float Deceleration;
         public float MaxSlopeAngle; public bool IsGrounded; public Vector2 GroundNormal; public float Stamina; public float MaxStamina; public float StaminaRegenRate; public float StaminaDrainRate;
@@ -423,6 +428,11 @@ namespace Game.Gameplay.Movement.Components
 
     public struct MovementStateComponent : IComponent, IReusableComponent
     {
+        // Contrat IReusableComponent : remise a zero avant reutilisation par le
+        // pool. Sur un struct, `this = default` remet TOUS les champs a leur valeur
+        // par defaut — rien ne peut etre oublie quand un champ est ajoute plus tard.
+        public void Reset() => this = default;
+
         public MovementState State; public Vector2 DesiredVelocity; public bool IsSlipping; public float SlipRecoveryTimer;
         // Ajouts
         public MovementStance Stance; public bool IsUsingCover; public bool IsSprintingBurst; public bool IsPeeking; public bool IsStrafing;
@@ -439,6 +449,11 @@ namespace Game.Gameplay.Movement.Components
 
     public struct AnimationStateComponent : IComponent, IReusableComponent
     {
+        // Contrat IReusableComponent : remise a zero avant reutilisation par le
+        // pool. Sur un struct, `this = default` remet TOUS les champs a leur valeur
+        // par defaut — rien ne peut etre oublie quand un champ est ajoute plus tard.
+        public void Reset() => this = default;
+
         public string CurrentState;
         public float SpeedParameter;
         public float DirectionParameter;
@@ -872,6 +887,11 @@ namespace Game.Gameplay.Movement.Components
 
     public struct MovementSoundComponent : IComponent, IReusableComponent
     {
+        // Contrat IReusableComponent : remise a zero avant reutilisation par le
+        // pool. Sur un struct, `this = default` remet TOUS les champs a leur valeur
+        // par defaut — rien ne peut etre oublie quand un champ est ajoute plus tard.
+        public void Reset() => this = default;
+
         public string CurrentFootstepSound;
         public string CurrentSurfaceSound;
         public string CurrentBreathingSound;
@@ -943,6 +963,11 @@ namespace Game.Gameplay.Movement.Components
 
     public struct MovementVFXComponent : IComponent, IReusableComponent
     {
+        // Contrat IReusableComponent : remise a zero avant reutilisation par le
+        // pool. Sur un struct, `this = default` remet TOUS les champs a leur valeur
+        // par defaut — rien ne peut etre oublie quand un champ est ajoute plus tard.
+        public void Reset() => this = default;
+
         public string CurrentTrailEffect;
         public string CurrentDustEffect;
         public string CurrentSplashEffect;
@@ -1706,6 +1731,16 @@ namespace Movement.Animation
 // - Système Principal de Mouvement (mis à jour) -
 public class MovementSystem : IMovementSystem
 {
+    // Le seul membre de IMovementSystem, declare dans
+    // Engine/Animation/AnimationEngineStub.Index.cs:87. Vector3 et Quaternion
+    // viennent d'Engine.Animation, deja importe en tete de fichier.
+    //
+    // Corps vide plutot qu'une pose ecrite au hasard : aucun appelant n'existe
+    // encore, donc rien ne dicte ce que le systeme doit faire de la racine.
+    public void SetAnimationRootMotion(string entityId, Vector3 position, Quaternion rotation)
+    {
+    }
+
     private EntityManager _entityManager;
     private PhysicsSystem _physicsSystem; // Reçoit PhysicsSystem via injection de dépendances
     private NavMesh _navMesh; // Reçoit NavMesh via injection de dépendances

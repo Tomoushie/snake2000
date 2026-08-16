@@ -29,112 +29,23 @@ namespace Engine.Animation
     // Réutilisation de certains enums/types du stub
     using Engine.Animation;
 
-    public enum AnimationEngineState
-    {
-        Uninitialized,
-        Initializing,
-        Ready,
-        Updating,
-        Suspending,
-        Suspended,
-        ShuttingDown,
-        Disposed
-    }
+    // AnimationEngineState est declare dans un fichier partiel d'AnimationEngineStub.
 
-    public enum StubSimulationMode
-    {
-        Normal,          // Comportement standard
-        Degraded,        // Simule des performances réduites
-        ErrorProne,      // Injecte des erreurs aléatoires
-        Deterministic,   // Force le déterminisme pour les tests
-        Chaos,           // Injecte des fautes aléatoires et variées
-        StressTest       // Simule des charges extrêmes
-    }
+    // StubSimulationMode est declare dans un fichier partiel d'AnimationEngineStub.
 
-    public enum AnimationQualityLevel
-    {
-        Low,
-        Medium,
-        High,
-        Ultra
-    }
+    // AnimationQualityLevel est declare dans un fichier partiel d'AnimationEngineStub.
 
-    public enum AnimationCompressionMethod
-    {
-        None,
-        VectorQuantization,
-        DeltaCompression,
-        KeyframeReduction
-    }
+    // AnimationCompressionMethod est declare dans un fichier partiel d'AnimationEngineStub.
 
-    public enum AnimationUpdateMode
-    {
-        Sequential,
-        Parallel,
-        Predictive
-    }
+    // AnimationUpdateMode est declare dans un fichier partiel d'AnimationEngineStub.
 
-    // Types de métriques pour le dashboard
-    public enum OrchestratorMetricType
-    {
-        ActivePlaybacks,
-        ActivePoses,
-        CpuUpdateMs,
-        MemoryUsedBytes,
-        TotalBonesAnimated,
-        RenderedPoses,
-        RootMotionApplied,
-        BlendsCalculated,
-        IKIterations,
-        ProceduralUpdates,
-        CompressedClipsLoaded,
-        StreamingRequests,
-        ThreadingTasksQueued,
-        DeterministicFrames,
-        ErrorCount,
-        WarningCount,
-        HealthPercentage,
-        LoadedPlugins, // [AJOUT]
-        TelemetryEvents, // [AJOUT]
-        ConfigChanges, // [AJOUT]
-        SnapshotsTaken, // [AJOUT]
-        AssetsLoaded, // [AJOUT]
-        AssetsUnloaded, // [AJOUT]
-        Prefetches, // [AJOUT]
-        IntegrityChecks, // [AJOUT]
-        ChaosEvents, // [AJOUT]
-        ABRTests, // [AJOUT]
-        FeatureToggles, // [AJOUT]
-        RuntimeAudits, // [AJOUT]
-        CircuitBreakerTrips // [AJOUT]
-    }
+    // OrchestratorMetricType est declare dans un fichier partiel d'AnimationEngineStub.
 
-    // A. Architecture et structure
-    public enum SubsystemType
-    {
-        BlendTree,
-        StateMachine,
-        InverseKinematics,
-        Procedural,
-        Compression
-    }
+    // SubsystemType est declare dans un fichier partiel d'AnimationEngineStub.
 
-    public enum SubsystemHealthStatus
-    {
-        Healthy,
-        Warning,
-        Error,
-        Recovering
-    }
+    // SubsystemHealthStatus est declare dans un fichier partiel d'AnimationEngineStub.
 
-    // D. Diagnostic et instrumentation
-    public enum DiagnosticsLevel
-    {
-        None,
-        Basic,
-        Verbose,
-        Full
-    }
+    // DiagnosticsLevel est declare dans un fichier partiel d'AnimationEngineStub.
 
     public enum ThreadAffinity
     {
@@ -144,130 +55,29 @@ namespace Engine.Animation
         Dedicated
     }
 
-    // G. Sécurité et stabilité
-    [Flags]
-    public enum StubFeatureFlags
-    {
-        None = 0,
-        CallLogging = 1 << 0,
-        Assertions = 1 << 1,
-        Snapshots = 1 << 2,
-        Replay = 1 << 3,
-        FaultInjection = 1 << 4,
-        Validation = 1 << 5,
-        PerformanceSim = 1 << 6,
-        MemoryPressureSim = 1 << 7,
-        ThreadingSim = 1 << 8,
-        Hooks = 1 << 9,
-        SafeMode = 1 << 10, // H. Extensibilité
-        // [AJOUT] Nouveaux flags pour les idées 398-597
-        PluginLoading = 1 << 11,
-        Telemetry = 1 << 12,
-        HotReload = 1 << 13,
-        ABTesting = 1 << 14,
-        CanaryMode = 1 << 15,
-        ChaosMonkey = 1 << 16,
-        AssetStreaming = 1 << 17,
-        AssetCaching = 1 << 18,
-        IntegrityChecking = 1 << 19,
-        AuditLogging = 1 << 20,
-        RateLimiting = 1 << 21,
-        CircuitBreaking = 1 << 22,
-        GDPRMode = 1 << 23,
-        PIIProtection = 1 << 24
-    }
+    // StubFeatureFlags est declare dans un fichier partiel d'AnimationEngineStub.
 
-    // B. Diagnostic et instrumentation
-    public readonly struct TraceEvent
-    {
-        public readonly string Message;
-        public readonly DateTime Timestamp;
-        public readonly AnimationEngineState State;
-        public readonly string CorrelationId; // [AJOUT]
-        public TraceEvent(string msg, DateTime time, AnimationEngineState state, string corrId = null) => (Message, Timestamp, State, CorrelationId) = (msg, time, state, corrId);
-    }
+    // TraceEvent est declare dans un fichier partiel d'AnimationEngineStub.
 
-    public readonly struct AnimationPose
-    {
-        public readonly Dictionary<string, Transform> Bones; // Nom du bone -> Transform
-        public readonly float Time;
-        public readonly AnimationClip Clip;
-        public AnimationPose(Dictionary<string, Transform> bones, float time, AnimationClip clip) => (Bones, Time, Clip) = (bones, time, clip);
-    }
+    // AnimationPose est declare dans un fichier partiel d'AnimationEngineStub.
 
-    public readonly struct AnimationClip
-    {
-        public readonly string Name;
-        public readonly float Duration;
-        public readonly List<Keyframe> Keyframes;
-        public readonly AnimationCompressionMethod Compression;
-        public readonly string AssetPath; // [AJOUT] Chemin d'origine
-        public readonly string Checksum; // [AJOUT] Pour intégrité
-        public readonly Dictionary<string, object> Metadata; // [AJOUT] Pour tags, licence, etc.
-        public AnimationClip(string name, float duration, List<Keyframe> keyframes, AnimationCompressionMethod comp, string path, string checksum, Dictionary<string, object> metadata) => (Name, Duration, Keyframes, Compression, AssetPath, Checksum, Metadata) = (name, duration, keyframes, comp, path, checksum, metadata);
-    }
+    // AnimationClip est declare dans un fichier partiel d'AnimationEngineStub.
 
-    public readonly struct Keyframe
-    {
-        public readonly float Time;
-        public readonly Transform Transform;
-        public Keyframe(float time, Transform transform) => (Time, Transform) = (time, transform);
-    }
+    // Keyframe est declare dans un fichier partiel d'AnimationEngineStub.
 
-    public struct Transform
-    {
-        public Vector3 Position;
-        public Quaternion Rotation;
-        public Vector3 Scale;
-        public Transform(Vector3 pos, Quaternion rot, Vector3 scale) => (Position, Rotation, Scale) = (pos, rot, scale);
-    }
+    // Transform est declare dans un fichier partiel d'AnimationEngineStub.
 
-    public struct Vector3
-    {
-        public float X, Y, Z;
-        public Vector3(float x, float y, float z) => (X, Y, Z) = (x, y, z);
-        public static Vector3 Zero => new Vector3(0, 0, 0);
-    }
+    // Vector3 est declare dans un fichier partiel d'AnimationEngineStub.
 
-    public struct Quaternion
-    {
-        public float X, Y, Z, W;
-        public Quaternion(float x, float y, float z, float w) => (X, Y, Z, W) = (x, y, z, w);
-        public static Quaternion Identity => new Quaternion(0, 0, 0, 1);
-    }
+    // Quaternion est declare dans un fichier partiel d'AnimationEngineStub.
 
-    public readonly struct AnimationEngineMetrics
-    {
-        public readonly Dictionary<OrchestratorMetricType, float> Values;
-        public AnimationEngineMetrics(Dictionary<OrchestratorMetricType, float> values) => Values = values;
-    }
+    // AnimationEngineMetrics est declare dans un fichier partiel d'AnimationEngineStub.
 
-    // C. Performance et threading
-    public readonly struct PerformanceSnapshot
-    {
-        public readonly float CpuTimeMs;
-        public readonly long MemoryUsedBytes;
-        public readonly int ActiveThreads;
-        public readonly float FrameTimeMs;
-        public PerformanceSnapshot(float cpuTime, long mem, int threads, float frameTime) => (CpuTimeMs, MemoryUsedBytes, ActiveThreads, FrameTimeMs) = (cpuTime, mem, threads, frameTime);
-    }
+    // PerformanceSnapshot est declare dans un fichier partiel d'AnimationEngineStub.
 
-    // D. Simulation et test
-    public readonly struct StressProfile
-    {
-        public readonly int CpuLoadPercent;
-        public readonly int MemoryPressureMB;
-        public readonly int ThreadingLoadTasks;
-        public StressProfile(int cpu, int mem, int thread) => (CpuLoadPercent, MemoryPressureMB, ThreadingLoadTasks) = (cpu, mem, thread);
-    }
+    // StressProfile est declare dans un fichier partiel d'AnimationEngineStub.
 
-    // H. Extensibilité
-    public readonly struct VersionInfo
-    {
-        public readonly string Version;
-        public readonly DateTime BuildDate;
-        public VersionInfo(string v, DateTime bd) => (Version, BuildDate) = (v, bd);
-    }
+    // VersionInfo est declare dans un fichier partiel d'AnimationEngineStub.
 
     // [AJOUT] Structures pour les idées 398-597
     public readonly struct PluginManifest
@@ -281,13 +91,7 @@ namespace Engine.Animation
         public PluginManifest(string name, string version, string author, string desc, List<string> deps, Dictionary<string, object> caps) => (Name, Version, Author, Description, Dependencies, Capabilities) = (name, version, author, desc, deps, caps);
     }
 
-    public readonly struct TelemetryEvent
-    {
-        public readonly string Name;
-        public readonly Dictionary<string, object> Properties;
-        public readonly DateTime Timestamp;
-        public TelemetryEvent(string name, Dictionary<string, object> props, DateTime time) => (Name, Properties, Timestamp) = (name, props, time);
-    }
+    // TelemetryEvent est declare dans un fichier partiel d'AnimationEngineStub.
 
     public readonly struct FeatureToggle
     {
@@ -346,40 +150,11 @@ namespace Engine.Animation
 
     #region Interfaces
 
-    /// <summary>
-    /// Interface uniforme pour tous les sous-systèmes d'animation.
-    /// </summary>
-    public interface IAnimationSubsystem
-    {
-        string Name { get; }
-        SubsystemType Type { get; }
-        void Initialize(AnimationEngineStub engine);
-        void Update(float deltaTime);
-        void Shutdown();
-        AnimationEngineMetrics GetMetrics(); // Pour le dashboard
-        SubsystemHealthStatus GetHealthStatus();
-    }
+    // IAnimationSubsystem est declare dans un fichier partiel d'AnimationEngineStub.
 
-    // H. Extensibilité
-    public interface IAnimationPlugin
-    {
-        string Name { get; }
-        void Initialize(AnimationEngineStub engine);
-        void Update(float deltaTime);
-        void Shutdown();
-        PluginManifest GetManifest(); // [AJOUT]
-    }
+    // IAnimationPlugin est declare dans un fichier partiel d'AnimationEngineStub.
 
-    // [AJOUT] Interfaces pour les idées 398-597
-    public interface IAssetCatalog
-    {
-        void RegisterAsset(AssetInfo info);
-        AssetInfo GetAssetInfo(string name);
-        List<AssetInfo> GetAllAssets();
-        bool IsAssetLoaded(string name);
-        void MarkAssetAsUsed(string name);
-        void MarkAssetAsUnused(string name);
-    }
+    // IAssetCatalog est declare dans un fichier partiel d'AnimationEngineStub.
 
     public interface IAssetCache
     {
@@ -1618,57 +1393,15 @@ namespace Engine.Animation
     // IAnimationEngine etait redeclare ici, en concurrence avec Engine/IAnimationEngine.cs.
     // Le contrat unique vit desormais dans Engine/IAnimationEngine.cs.
 
-    public enum StubFaultType
-    {
-        MemoryAllocationFailure,
-        ThreadStarvation,
-        CorruptedData,
-        InvalidStateTransition,
-        ResourceNotFound,
-        Timeout,
-        Overflow,
-        Underflow
-    }
+    // StubFaultType est declare dans un fichier partiel d'AnimationEngineStub.
 
-    // Structures de configuration (à compléter selon les besoins)
-    public class AnimationEngineConfig
-    {
-        public int MaxConcurrentAnimations { get; set; } = 100;
-        public AnimationQualityLevel DefaultQuality { get; set; } = AnimationQualityLevel.High;
-        // ... autres paramètres
-    }
+    // AnimationEngineConfig est declare dans un fichier partiel d'AnimationEngineStub.
 
-    public class AnimationEngineStubConfig
-    {
-        public StubSimulationMode SimulationMode { get; set; }
-        public bool EnableCallLogging { get; set; }
-        public bool EnableAssertions { get; set; }
-        public bool EnableSnapshots { get; set; }
-        public bool EnableReplay { get; set; }
-        public bool EnableFaultInjection { get; set; }
-        public bool EnableValidation { get; set; }
-        public bool EnablePerformanceSim { get; set; }
-        public bool EnableMemoryPressureSim { get; set; }
-        public bool EnableThreadingSim { get; set; }
-        public bool EnableHooks { get; set; }
-        public AnimationQualityLevel QualityLevel { get; set; }
-        public AnimationUpdateMode UpdateMode { get; set; }
-        public StubFeatureFlags FeatureFlags { get; set; } = StubFeatureFlags.None;
-        public static AnimationEngineStubConfig Default => new AnimationEngineStubConfig(); // Factory method simple
-    }
+    // AnimationEngineStubConfig est declare dans un fichier partiel d'AnimationEngineStub.
 
-    // D. Simulation et test
-    public static class StressProfileExtensions
-    {
-        public static StressProfile Default => new StressProfile(0, 0, 0);
-        public static StressProfile Heavy => new StressProfile(80, 500, 100);
-    }
+    // StressProfileExtensions est declare dans un fichier partiel d'AnimationEngineStub.
 
-    // H. Extensibilité
-    public static class VersionInfoExtensions
-    {
-        public static VersionInfo Default => new VersionInfo("1.0.0", DateTime.MinValue);
-    }
+    // VersionInfoExtensions est declare dans un fichier partiel d'AnimationEngineStub.
 
     #endregion
 }

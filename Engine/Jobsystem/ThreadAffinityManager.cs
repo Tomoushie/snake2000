@@ -907,6 +907,26 @@ namespace Engine.Jobsystem
             return map;
         }
 
+        // Six methodes appelees par Initialize, Update et Shutdown sans etre
+        // definies nulle part. Leurs collaborateurs, eux, existent bien comme
+        // champs de cette classe — _platformMatrix, _deterministicLedger,
+        // _telemetryBuffer, _leaseManager — mais aucun ne porte encore de membre
+        // qu'un site d'appel designe. Les corps restent donc vides, et le diront
+        // jusqu'a ce qu'un appelant dicte autre chose.
+
+        private void InitializePlatformSpecificFeatures() { }
+
+        private void ShutdownPlatformSpecificFeatures() { }
+
+        /// <summary>Version synchrone, appelee par Initialize ; l'asynchrone suit.</summary>
+        private void StartLoadMonitoring() { }
+
+        private void UpdateDeterministicLedger(float deltaTime) { }
+
+        private void UpdateTelemetryBuffer(float deltaTime) { }
+
+        private void UpdateLeaseManager(float deltaTime) { }
+
         private async Task StartLoadMonitoringAsync()
         {
             if (_disposed) throw new ObjectDisposedException(GetType().Name);

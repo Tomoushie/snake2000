@@ -163,8 +163,14 @@ namespace Game.Gameplay.Movement.Tools
             string key = source + ":" + message; // Clé simple pour regrouper les erreurs identiques
             if (_errors.ContainsKey(key))
             {
-                _errors[key].Count++;
-                _errors[key].LastLoggedTime = DateTime.UtcNow;
+                // ErrorInfo est un struct : `_errors[key].Count++` modifiait la COPIE
+                // rendue par l'indexeur, et le compteur ne bougeait jamais. Le
+                // compilateur le refuse (CS1612) — avec une classe, la meme ecriture
+                // serait passee en silence. Lire, modifier, reecrire.
+                var info = _errors[key];
+                info.Count++;
+                info.LastLoggedTime = DateTime.UtcNow;
+                _errors[key] = info;
             }
             else
             {
@@ -1805,6 +1811,11 @@ public class MovementSystem : IMovementSystem
 
     // Nouvelles dépendances pour les optimisations et les hooks avancés
     private IThreadAffinityManager _threadAffinityManager; // Pour le Thread Affinity Control
+    // Champ absent alors que deux sites l'utilisent (1868, 1880) pour construire
+    // MovementDebugOverlaySystem. RenderSystem vient d'Engine.Rendering, deja
+    // importe en tete de fichier.
+    private Engine.Rendering.RenderSystem _renderSystem;
+
     private IGPUProfilerHook _gpuProfilerHook; // Pour le GPU Profiling Hook
     private IAnimationEngine _animationEngine; // Pour le Root Motion Async et la Pose Matching
     private IAudioEngine _audioEngine; // Pour le Footstep Sync et l'Audio Latency Profiler

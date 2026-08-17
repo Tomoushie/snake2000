@@ -17,7 +17,7 @@ namespace Snake2000.Systems
         public HitStopSystem(IEventBus eventBus)
         {
             _eventBus = eventBus;
-            _hitStopTimer = new Timer { Interval = 16 }; // ~60 FPS
+            _hitStopTimer = new System.Windows.Forms.Timer { Interval = 16 }; // ~60 FPS
             _hitStopTimer.Tick += OnHitStopTick;
         }
 

@@ -312,7 +312,7 @@ namespace Engine.Animation
 
         public AnimationEngineStub()
         {
-            _stateWatchdogTimer = new Timer(WatchdogCallback, null, Timeout.Infinite, Timeout.Infinite);
+            _stateWatchdogTimer = new System.Threading.Timer(WatchdogCallback, null, Timeout.Infinite, Timeout.Infinite);
             // Initialiser les métriques avec des valeurs par défaut
             foreach (OrchestratorMetricType type in Enum.GetValues(typeof(OrchestratorMetricType)))
             {

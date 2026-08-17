@@ -20,7 +20,7 @@ namespace Engine.Animation
 
         public AnimationWatchdog()
         {
-            _timer = new Timer(CheckResponsiveness, null, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(5)); // Vérifier toutes les 5 secondes
+            _timer = new System.Threading.Timer(CheckResponsiveness, null, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(5)); // Vérifier toutes les 5 secondes
         }
 
         private void CheckResponsiveness(object state)

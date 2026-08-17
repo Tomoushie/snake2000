@@ -1554,6 +1554,41 @@ namespace Engine.Core
 
         /// <summary>Catégories sans affectation.</summary>
         public List<JobCategory> UnassignedCategories;
+
+        /// <summary>
+        /// Constructeur de copie : ThreadAffinityManager ecrit
+        /// `new CategoryAffinityMap(_affinityMap)` pour rendre un instantane.
+        /// </summary>
+        public CategoryAffinityMap(CategoryAffinityMap autre)
+        {
+            Assignments = autre.Assignments != null
+                ? new Dictionary<JobCategory, int>(autre.Assignments)
+                : new Dictionary<JobCategory, int>();
+            UnassignedCategories = autre.UnassignedCategories != null
+                ? new List<JobCategory>(autre.UnassignedCategories)
+                : new List<JobCategory>();
+        }
+
+        public void Clear()
+        {
+            Assignments?.Clear();
+            UnassignedCategories?.Clear();
+        }
+
+        /// <summary>
+        /// Threads affectes a une categorie. Le site d'appel lit `threads.Count`,
+        /// d'ou une liste et non l'entier de `Assignments`.
+        /// </summary>
+        public bool TryGetValue(JobCategory category, out List<int> threads)
+        {
+            if (Assignments != null && Assignments.TryGetValue(category, out var t))
+            {
+                threads = new List<int> { t };
+                return true;
+            }
+            threads = new List<int>();
+            return false;
+        }
     }
 
     #endregion
@@ -2405,6 +2440,27 @@ namespace Engine.Core
         public bool HugePagesEnabled;
         public bool PrefetcherEnabled;
         public float TurboBudgetPercentage;
+
+        public ThreadAffinityManagerConfig() { }
+
+        /// <summary>Constructeur de copie : `new ThreadAffinityManagerConfig(_config)`.</summary>
+        public ThreadAffinityManagerConfig(ThreadAffinityManagerConfig autre)
+        {
+            CpuAffinityMask = autre.CpuAffinityMask;
+            ReservedCoreCount = autre.ReservedCoreCount;
+            ThreadToCoreMap = autre.ThreadToCoreMap != null ? new Dictionary<int, int>(autre.ThreadToCoreMap) : null;
+            EnableHyperthreading = autre.EnableHyperthreading;
+            Mode = autre.Mode;
+            EnableAutoBalancing = autre.EnableAutoBalancing;
+            SafeMode = autre.SafeMode;
+            RebalanceIntervalSec = autre.RebalanceIntervalSec;
+            RebalanceThreshold = autre.RebalanceThreshold;
+            DefaultProfile = autre.DefaultProfile;
+            CoreParkingEnabled = autre.CoreParkingEnabled;
+            HugePagesEnabled = autre.HugePagesEnabled;
+            PrefetcherEnabled = autre.PrefetcherEnabled;
+            TurboBudgetPercentage = autre.TurboBudgetPercentage;
+        }
     }
 
     public struct ThreadAffinityHeatmap

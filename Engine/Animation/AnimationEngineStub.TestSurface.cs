@@ -32,6 +32,12 @@ namespace Engine.Animation
 
     public static class AnimationEngineStubFactory
     {
+        // Quatre presets appeles par l'orchestrateur de tests. Ils rendent tous le
+        // meme stub : aucun appelant ne distingue encore leurs comportements, et
+        // inventer cette distinction serait ecrire une intention, pas un contrat.
         public static AnimationEngineStub CreateDeterministic() => new AnimationEngineStub();
+        public static AnimationEngineStub CreateMinimal() => new AnimationEngineStub();
+        public static AnimationEngineStub CreateStandard() => new AnimationEngineStub();
+        public static AnimationEngineStub CreateFull() => new AnimationEngineStub();
     }
 }

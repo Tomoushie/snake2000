@@ -15,6 +15,9 @@ namespace Snake2000.Engine.Animation;
 // --- CLASSES UTILITAIRES ---
 public static class MathUtils
 {
+    /// <summary>Duree lisible. Appelee avec un TimeSpan.</summary>
+    public static string FormatTime(TimeSpan duree) => duree.ToString(@"hh\:mm\:ss\.fff");
+
     public static class AngleHelper
     {
         public static float LerpAngle(float a, float b, float t)

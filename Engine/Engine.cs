@@ -510,6 +510,9 @@ public struct Entity
 {
     public int Id { get; set; }
     public Entity(int id) => Id = id;
+
+    /// <summary>Entite absente. Id = -1, aucune entite reelle ne pouvant l'avoir.</summary>
+    public static Entity Null => new Entity(-1);
 }
 
 public interface IComponent { }

@@ -898,25 +898,29 @@ public struct AnimationRenderMetricsSnapshot
     #endregion
 
     #region Evénements
-    public class GPUProfilerHookInitializedEvent
-    {
+    // `: IMessage` — publie sur EventBus, dont Publish<T> et Subscribe<T> exigent
+    // cette contrainte. Seize types d'evenement la manquaient : 30 CS0311.
+    public class GPUProfilerHookInitializedEvent : IMessage
+{
         public GPUProfilerHook Source { get; }
         public GPUProfilerHookInitializedEvent(GPUProfilerHook source) => Source = source;
     }
+    // `: IMessage` — publie sur EventBus, dont Publish<T> et Subscribe<T> exigent
+    // cette contrainte. Seize types d'evenement la manquaient : 30 CS0311.
 
-    public class GPUProfilerHookShutdownEvent
-    {
+    public class GPUProfilerHookShutdownEvent : IMessage
+{
         public GPUProfilerHook Source { get; }
         public GPUProfilerHookShutdownEvent(GPUProfilerHook source) => Source = source;
     }
 
-    public class GPUFrameBudgetExceededEvent // [RENOMMAGE]
+    public class GPUFrameBudgetExceededEvent : IMessage // [RENOMMAGE]
     {
         public float FrameTimeGpuMs { get; }
         public GPUFrameBudgetExceededEvent(float frameTimeGpuMs) => FrameTimeGpuMs = frameTimeGpuMs;
     }
 
-    public class GPUProfilerErrorEvent // [RENOMMAGE]
+    public class GPUProfilerErrorEvent : IMessage // [RENOMMAGE]
     {
         public string Message { get; }
         public GPUErrorSeverity Severity { get; }
@@ -927,7 +931,7 @@ public struct AnimationRenderMetricsSnapshot
         }
     }
 
-    public class GPUProfilerHangDetectedEvent // [RENOMMAGE]
+    public class GPUProfilerHangDetectedEvent : IMessage // [RENOMMAGE]
     {
         public float DurationMs { get; }
         public GPUProfilerHangDetectedEvent(float durationMs) => DurationMs = durationMs;
@@ -989,9 +993,11 @@ public struct AnimationRenderMetricsSnapshot
             StartTime = startTime;
         }
     }
+    // `: IMessage` — publie sur EventBus, dont Publish<T> et Subscribe<T> exigent
+    // cette contrainte. Seize types d'evenement la manquaient : 30 CS0311.
 
-    public class GPUProfilerStateChangedEvent
-    {
+    public class GPUProfilerStateChangedEvent : IMessage
+{
         public GPUProfilerState PreviousState { get; }
         public GPUProfilerState NewState { get; }
         public GPUProfilerStateChangedEvent(GPUProfilerState previous, GPUProfilerState newState)

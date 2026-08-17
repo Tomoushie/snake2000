@@ -839,20 +839,26 @@ namespace Engine.Audio
     #endregion
 
     #region Events
-    public class AudioEngineInitializedEvent
-    {
+    // `: IMessage` — publie sur EventBus, dont Publish<T> et Subscribe<T> exigent
+    // cette contrainte. Seize types d'evenement la manquaient : 30 CS0311.
+    public class AudioEngineInitializedEvent : IMessage
+{
         public IAudioEngine Source { get; }
         public AudioEngineInitializedEvent(IAudioEngine source) => Source = source;
     }
+    // `: IMessage` — publie sur EventBus, dont Publish<T> et Subscribe<T> exigent
+    // cette contrainte. Seize types d'evenement la manquaient : 30 CS0311.
 
-    public class AudioEngineShutdownEvent
-    {
+    public class AudioEngineShutdownEvent : IMessage
+{
         public IAudioEngine Source { get; }
         public AudioEngineShutdownEvent(IAudioEngine source) => Source = source;
     }
+    // `: IMessage` — publie sur EventBus, dont Publish<T> et Subscribe<T> exigent
+    // cette contrainte. Seize types d'evenement la manquaient : 30 CS0311.
 
-    public class AudioClipPlayedEvent
-    {
+    public class AudioClipPlayedEvent : IMessage
+{
         public IAudioClip Clip { get; }
         public AudioChannel Channel { get; }
         public uint SourceId { get; }
@@ -863,9 +869,11 @@ namespace Engine.Audio
             Clip = clip; Channel = channel; SourceId = sourceId; Position = position; Options = options;
         }
     }
+    // `: IMessage` — publie sur EventBus, dont Publish<T> et Subscribe<T> exigent
+    // cette contrainte. Seize types d'evenement la manquaient : 30 CS0311.
 
-    public class AudioVoiceStolenEvent
-    {
+    public class AudioVoiceStolenEvent : IMessage
+{
         public uint StolenSourceId { get; }
         public AudioPriority StolenPriority { get; }
         public AudioPriority NewPriority { get; }
@@ -874,9 +882,11 @@ namespace Engine.Audio
             StolenSourceId = stolenId; StolenPriority = stolenPrio; NewPriority = newPrio;
         }
     }
+    // `: IMessage` — publie sur EventBus, dont Publish<T> et Subscribe<T> exigent
+    // cette contrainte. Seize types d'evenement la manquaient : 30 CS0311.
 
-    public class AudioMixerVolumeChangedEvent
-    {
+    public class AudioMixerVolumeChangedEvent : IMessage
+{
         public AudioChannel Channel { get; }
         public float OldVolume { get; }
         public float NewVolume { get; }
@@ -887,8 +897,10 @@ namespace Engine.Audio
     }
 
     // [CONTRACTS C.35] Device Events
-    public class AudioDeviceChangedEvent
-    {
+    // `: IMessage` — publie sur EventBus, dont Publish<T> et Subscribe<T> exigent
+    // cette contrainte. Seize types d'evenement la manquaient : 30 CS0311.
+    public class AudioDeviceChangedEvent : IMessage
+{
         public string NewDeviceId { get; }
         public string NewDeviceName { get; }
         public AudioDeviceChangedEvent(string id, string name) { NewDeviceId = id; NewDeviceName = name; }
@@ -928,23 +940,29 @@ namespace Engine.Audio
     }
 
     // [CONTRACTS C.45] Playback Events
-    public class AudioPlaybackStartedEvent
-    {
+    // `: IMessage` — publie sur EventBus, dont Publish<T> et Subscribe<T> exigent
+    // cette contrainte. Seize types d'evenement la manquaient : 30 CS0311.
+    public class AudioPlaybackStartedEvent : IMessage
+{
         public uint SourceId { get; }
         public IAudioClip Clip { get; }
         public AudioPlaybackStartedEvent(uint id, IAudioClip clip) { SourceId = id; Clip = clip; }
     }
+    // `: IMessage` — publie sur EventBus, dont Publish<T> et Subscribe<T> exigent
+    // cette contrainte. Seize types d'evenement la manquaient : 30 CS0311.
 
-    public class AudioPlaybackStoppedEvent
-    {
+    public class AudioPlaybackStoppedEvent : IMessage
+{
         public uint SourceId { get; }
         public IAudioClip Clip { get; }
         public AudioPlaybackStoppedEvent(uint id, IAudioClip clip) { SourceId = id; Clip = clip; }
     }
 
     // [ARCHITECTURE B.12] Lifecycle Event
-    public class AudioEngineLifecycleEvent
-    {
+    // `: IMessage` — publie sur EventBus, dont Publish<T> et Subscribe<T> exigent
+    // cette contrainte. Seize types d'evenement la manquaient : 30 CS0311.
+    public class AudioEngineLifecycleEvent : IMessage
+{
         public AudioEngineState PreviousState { get; }
         public AudioEngineState NewState { get; }
         public DateTime Timestamp { get; }
@@ -952,8 +970,10 @@ namespace Engine.Audio
     }
 
     // [OBSERVABILITY H.1] Profiler Event
-    public class AudioProfilerEvent
-    {
+    // `: IMessage` — publie sur EventBus, dont Publish<T> et Subscribe<T> exigent
+    // cette contrainte. Seize types d'evenement la manquaient : 30 CS0311.
+    public class AudioProfilerEvent : IMessage
+{
         public string EventType { get; }
         public object Data { get; }
         public DateTime Timestamp { get; }

@@ -118,15 +118,50 @@ namespace Engine.Animation
 
     // Aucun membre : le releve d usage montre des types instancies, enregistres et recuperes, jamais interroges.
     // Update(float) : SubsystemLifecycleManager les pilote par la boucle de frame.
-    public class AnimationBlendTreeSystem { public void Update(float deltaTime) { } }
+    public class AnimationBlendTreeSystem
+    {
+        // Construit par `new AnimationBlendTreeSystem(this)` depuis le stub, qui se passe
+        // lui-meme ; conserve pour que le sous-systeme puisse remonter au moteur.
+        private readonly AnimationEngineStub _moteur;
+        public AnimationBlendTreeSystem(AnimationEngineStub moteur) { _moteur = moteur; }
+        public void Update(float deltaTime) { }
+    }
     // Update(float) : SubsystemLifecycleManager les pilote par la boucle de frame.
-    public class AnimationCompressionSystem { public void Update(float deltaTime) { } }
+    public class AnimationCompressionSystem
+    {
+        // Construit par `new AnimationCompressionSystem(this)` depuis le stub, qui se passe
+        // lui-meme ; conserve pour que le sous-systeme puisse remonter au moteur.
+        private readonly AnimationEngineStub _moteur;
+        public AnimationCompressionSystem(AnimationEngineStub moteur) { _moteur = moteur; }
+        public void Update(float deltaTime) { }
+    }
     // Update(float) : SubsystemLifecycleManager les pilote par la boucle de frame.
-    public class AnimationInverseKinematicsSystem { public void Update(float deltaTime) { } }
+    public class AnimationInverseKinematicsSystem
+    {
+        // Construit par `new AnimationInverseKinematicsSystem(this)` depuis le stub, qui se passe
+        // lui-meme ; conserve pour que le sous-systeme puisse remonter au moteur.
+        private readonly AnimationEngineStub _moteur;
+        public AnimationInverseKinematicsSystem(AnimationEngineStub moteur) { _moteur = moteur; }
+        public void Update(float deltaTime) { }
+    }
     // Update(float) : SubsystemLifecycleManager les pilote par la boucle de frame.
-    public class AnimationProceduralSystem { public void Update(float deltaTime) { } }
+    public class AnimationProceduralSystem
+    {
+        // Construit par `new AnimationProceduralSystem(this)` depuis le stub, qui se passe
+        // lui-meme ; conserve pour que le sous-systeme puisse remonter au moteur.
+        private readonly AnimationEngineStub _moteur;
+        public AnimationProceduralSystem(AnimationEngineStub moteur) { _moteur = moteur; }
+        public void Update(float deltaTime) { }
+    }
     // Update(float) : SubsystemLifecycleManager les pilote par la boucle de frame.
-    public class AnimationStateMachineSystem { public void Update(float deltaTime) { } }
+    public class AnimationStateMachineSystem
+    {
+        // Construit par `new AnimationStateMachineSystem(this)` depuis le stub, qui se passe
+        // lui-meme ; conserve pour que le sous-systeme puisse remonter au moteur.
+        private readonly AnimationEngineStub _moteur;
+        public AnimationStateMachineSystem(AnimationEngineStub moteur) { _moteur = moteur; }
+        public void Update(float deltaTime) { }
+    }
     // Le seul des treize types « sans membre » a qui un site d'appel en reclame :
     // dix proprietes lues, et un constructeur a treize parametres releve sur les
     // deux `new SubsystemDescriptor(...)` d'Index.cs, lignes 189 et 453.

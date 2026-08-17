@@ -101,6 +101,18 @@ namespace Engine.Core
         public void UpdateFromJobSystem(IJobSystem jobSystem)
         {
         }
+
+        public ThreadLoadDistribution() { }
+
+        /// <summary>Constructeur de copie : `new ThreadLoadDistribution(_loadDistribution)`.</summary>
+        public ThreadLoadDistribution(ThreadLoadDistribution autre)
+        {
+            AverageLoad = autre.AverageLoad;
+            MaxLoad = autre.MaxLoad;
+            MinLoad = autre.MinLoad;
+            ThreadLoads = new Dictionary<int, float>(autre.ThreadLoads);
+            CategoryLoads = new Dictionary<JobCategory, float>(autre.CategoryLoads);
+        }
     }
 
     // Aucun membre ne leur est reclame par un site d appel : elles restent des reperes.

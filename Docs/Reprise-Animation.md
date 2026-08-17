@@ -31,7 +31,7 @@ des types absents. En retirer **un seul** laissait 1 à 2 erreurs. En retirer
 | ce qu'on mesure | erreurs |
 |---|---|
 | le dépôt (`dotnet build Tools/Build-complet.csproj`) | **38** |
-| … avec `-p:SansStub=true` | **351 distinctes** (593 le 17 août au matin) |
+| … avec `-p:SansStub=true` | **209 distinctes** (593 le 17 août au matin) |
 
 **Deux erreurs de mesure commises le 17 août, à ne pas refaire :**
 
@@ -58,6 +58,18 @@ Les 466 : 149 `CS0103` (nom inexistant), 121 `CS1061` (membre inexistant),
 `AnimationEngineStub` **54**, `IAudioEngine` **51**, `.Index` **48**,
 `SnakeAI` **42**, `ThreadAffinityManager` **34** (79 avant),
 `GPUProfilerHook` **34** (93 avant).
+
+### Deux erreurs de ciblage que j'ai commises, à ne pas refaire
+
+**Un appel NON QUALIFIÉ dit dans quelle classe le membre doit vivre.** J'ai posé
+onze méthodes sur `partial class AnimationEngineStub` alors que les appels
+étaient dans `public static class AnimationEngineIndex`. Elles compilaient et ne
+satisfaisaient rien — 23 `CS0103` intacts. Vérifier la classe englobante avant
+d'écrire, pas seulement le nom du fichier.
+
+**Retirer un membre sans suivre TOUS ses sites laisse un trou.** En archivant
+`CaptureMetrics` j'ai emporté le champ `_lastMetrics`, que deux autres méthodes
+lisent et écrivent. Seul le compilateur l'a vu.
 
 ### La méthode qui marche sur ces erreurs-là
 

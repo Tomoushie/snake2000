@@ -2,17 +2,23 @@
 
 Document de passation, écrit le 16 août 2026 et tenu à jour depuis. Il porte
 l'état **mesuré**, ce qui a été tranché et ne doit pas être rouvert, et la
-méthode qui a fait tomber le compteur de 1 629 à 41.
+méthode de travail.
+
+**Commencer par la section « Le chiffre de ce compteur est un PLANCHER ».**
+Sans elle, tous les nombres de ce document se lisent de travers.
 
 ## Où en est le projet
 
-Mesuré avec `python Tools/diagnostic.py Engine Game` :
+Mesuré avec `python Tools/diagnostic.py Engine Game` — **et ce compteur ne voit
+que les erreurs de déclaration**, voir la section suivante :
 
-| | fichiers retenus | erreurs |
+| | fichiers retenus | erreurs de déclaration |
 |---|---|---|
 | 15 août | 71 | 1 629 |
 | après la session « IAnimationEngine » | 77 | 509 |
-| **maintenant** | **80** | **41** |
+| 17 août | 80 | 41 |
+
+Le vrai total, au build complet, est plus bas dans cette page.
 
 ## Le chiffre de ce compteur est un PLANCHER, pas un état
 
@@ -52,12 +58,13 @@ seule suffit à tout masquer. `CS0103`, `CS1061`, `CS0117`, `CS1729` sont des
 erreurs de **corps** : celles-là ne s'affichent que lorsque la déclaration est
 entièrement propre, et leur nombre est donc le vrai.
 
-Les 466 : 149 `CS0103` (nom inexistant), 121 `CS1061` (membre inexistant),
-30 `CS0311`, 24 `CS1729` (constructeur absent). Par fichier :
-`AnimationEngineStubOrchestrator` **67**, le bridge **61**,
-`AnimationEngineStub` **54**, `IAudioEngine` **51**, `.Index` **48**,
-`SnakeAI` **42**, `ThreadAffinityManager` **34** (79 avant),
-`GPUProfilerHook` **34** (93 avant).
+Les 209, au 17 août au soir : 61 `CS0103` (nom inexistant), 18 `CS1729`
+(constructeur absent), 16 `CS0019` (opérateur inapplicable), 13 `CS0234`,
+13 `CS0117`, 13 `CS0246`, 12 `CS1061`, 11 `CS1503`.
+
+Le foyer dominant est **`AI/SnakeAI.cs`, 42** — et il n'est pas soluble par
+relevé, voir « Ce qui reste à faire ». Le reste est éparpillé : plus aucun
+fichier au-dessus de 20 hors celui-là.
 
 ### Deux erreurs de ciblage que j'ai commises, à ne pas refaire
 
@@ -90,10 +97,10 @@ puis regrouper les `CS1061` par type porteur : chaque groupe est un lot.
 `Snake2000App.csproj` ne référence que `Snake2000.cs`. C'est le seul moyen de
 connaître l'état réel.
 
-Ce qui reste vrai malgré tout : les 38 erreurs actuelles sont **délibérées**.
-Ce sont huit types de `DummyAnimationEngine` qui n'apparaissent qu'en
-signature ; les déclarer produirait des coquilles vides. Mais elles ne sont plus
-le bout du chemin — elles sont le paravent.
+Ce qui reste vrai malgré tout : les 38 erreurs du build **sans** `SansStub` sont
+**délibérées**. Ce sont huit types de `DummyAnimationEngine` qui n'apparaissent
+qu'en signature ; les déclarer produirait des coquilles vides. Mais elles ne sont
+pas le bout du chemin — elles sont le paravent qui cache les 209.
 
 ## La règle qui a tranché quatre fois
 

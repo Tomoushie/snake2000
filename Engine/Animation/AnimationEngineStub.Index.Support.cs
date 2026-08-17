@@ -14,59 +14,63 @@ namespace Engine.Animation
         High
     }
 
-    public partial class AnimationEngineStub
+    // CORRECTION : ces onze methodes etaient posees sur AnimationEngineStub.
+    // Elles compilaient et ne satisfaisaient RIEN : les appels d'Index.cs sont
+    // NON QUALIFIES, donc membres de la classe qui les contient — et c'est
+    // `public static class AnimationEngineIndex`, pas le stub. D'ou `static`.
+    public static partial class AnimationEngineIndex
     {
-        public List<string> ListSubsystems()
+        public static List<string> ListSubsystems()
         {
             return new List<string>();
         }
 
-        public SubsystemDescriptor GetSubsystemDescriptor(string name)
+        public static SubsystemDescriptor GetSubsystemDescriptor(string name)
         {
             return default(SubsystemDescriptor);
         }
 
-        public SubsystemHealthStatus GetSubsystemHealth(string name)
+        public static SubsystemHealthStatus GetSubsystemHealth(string name)
         {
             return default(SubsystemHealthStatus);
         }
 
-        public T GetSubsystem<T>(string name) where T : class
+        public static T GetSubsystem<T>(string name) where T : class
         {
             return default(T);
         }
 
-        public SubsystemSecurityLevel GetSubsystemSecurityLevel(string name)
+        public static SubsystemSecurityLevel GetSubsystemSecurityLevel(string name)
         {
             return default(SubsystemSecurityLevel);
         }
 
-        public List<string> CalculateLoadOrder()
+        public static List<string> CalculateLoadOrder()
         {
             return new List<string>();
         }
 
-        public bool ValidateExternalSubsystemCompatibility(IExternalSubsystem instance)
+        public static bool ValidateExternalSubsystemCompatibility(IExternalSubsystem instance)
         {
             return false;
         }
 
-        public List<string> GetSubsystemDependencies(string name)
+        public static List<string> GetSubsystemDependencies(string name)
         {
             return new List<string>();
         }
 
-        public bool IsSubsystemHealthy(string name)
+        public static bool IsSubsystemHealthy(string name)
         {
             return false;
         }
 
-        public AnimationEngineMetrics GetSubsystemMetrics(string name)
+        public static AnimationEngineMetrics GetSubsystemMetrics(string name)
         {
             return default(AnimationEngineMetrics);
         }
 
-        public string GetSubsystemVersion(string name)
+        public static string GetSubsystemVersion(string name)
         {
             return string.Empty;
         }

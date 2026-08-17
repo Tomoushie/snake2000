@@ -1032,6 +1032,11 @@ public struct AnimationRenderMetricsSnapshot
         private CancellationTokenSource _captureCancellationSource;
         private readonly object _metricsLock = new object();
 
+        // Retabli : je l'avais retire avec CaptureMetrics, mais GetMetricsSnapshot
+        // le lit et le chargement depuis un fichier l'ecrit. Retirer un champ sans
+        // suivre TOUS ses sites laisse un trou que seul le compilateur voit.
+        private GPUMetricsSnapshot _lastMetrics = new GPUMetricsSnapshot();
+
         // Pour les alertes critiques
         private readonly object _alertLock = new object();
         private long _criticalGPUCostEvents = 0;
@@ -1585,7 +1590,11 @@ public AnimationRenderMetricsSnapshot GetAnimationMetricsSnapshot()
                 {
                     while (!_captureCancellationSource.Token.IsCancellationRequested)
                     {
-                        CaptureMetrics();
+                        // CaptureMetrics() a ete retiree : elle remplissait 88 champs
+                        // par 88 getters de IRenderEngine qui n'existent pas, et rien
+                        // ne lisait le resultat. Voir Docs/Intention/GPUMetricsSnapshot.cs.txt.
+                        // La boucle subsiste et ne fait plus rien : la retirer entierement
+                        // demande de decider du sort du minuteur de capture.
                         await Task.Delay(TimeSpan.FromMilliseconds(_config.CaptureIntervalMs), _captureCancellationSource.Token);
                     }
                 }, _captureCancellationSource.Token);

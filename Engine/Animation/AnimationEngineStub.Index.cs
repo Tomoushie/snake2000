@@ -106,7 +106,9 @@ namespace Engine.Animation
     /// Fournit une API riche pour l'orchestration, le monitoring, le debugging et la configuration dynamique.
     /// Intègre : Découverte dynamique, orchestration avancée, monitoring, interopérabilité, configuration, documentation, audit, historique.
     /// </summary>
-    public static class AnimationEngineIndex
+    // `partial` : les onze methodes que cette classe appelle sans les definir
+    // vivent dans AnimationEngineStub.Index.Support.cs.
+    public static partial class AnimationEngineIndex
     {
         #region Fields
 

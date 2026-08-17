@@ -37,7 +37,7 @@ des types absents. En retirer **un seul** laissait 1 à 2 erreurs. En retirer
 | ce qu'on mesure | erreurs |
 |---|---|
 | le dépôt (`dotnet build Tools/Build-complet.csproj`) | **38** |
-| … avec `-p:SansStub=true` | **190 distinctes** (593 le 17 août au matin) |
+| … avec `-p:SansStub=true` | **184 distinctes** (593 le 17 août au matin) |
 
 **Deux erreurs de mesure commises le 17 août, à ne pas refaire :**
 
@@ -58,7 +58,7 @@ seule suffit à tout masquer. `CS0103`, `CS1061`, `CS0117`, `CS1729` sont des
 erreurs de **corps** : celles-là ne s'affichent que lorsque la déclaration est
 entièrement propre, et leur nombre est donc le vrai.
 
-Les 190 : 45 `CS0103` (nom inexistant), 18 `CS1729` (constructeur absent),
+Les 184 : 45 `CS0103` (nom inexistant), 18 `CS1729` (constructeur absent),
 16 `CS0019` (opérateur inapplicable), puis une longue traîne.
 
 Le foyer dominant est **`AI/SnakeAI.cs`, 42** — et il n'est pas soluble par

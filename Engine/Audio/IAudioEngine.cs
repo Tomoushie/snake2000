@@ -327,6 +327,18 @@ namespace Engine.Audio
         void Shutdown();
         void SetMasterVolume(float volume);
         IAudioVoice PlayClip(IAudioClip clip, AudioSourceProperties props);
+
+        // Huit membres reclames par AudioEngine, chacun sur un site d'appel reel.
+        // SetParameter recoit "GlobalPitch", "DopplerFactor", "OutputChannels"… avec
+        // des valeurs de types varies : object, pas un type ferme.
+        string Version { get; }
+        int MaxVoices { get; }
+        bool IsHardwareAccelerated { get; }
+        void SetParameter(string nom, object valeur);
+        void Flush();
+        void Suspend();
+        void Resume();
+        void Dispose();
     }
 
     // [CONTRACTS C.2] DSP Interface
@@ -372,6 +384,7 @@ namespace Engine.Audio
     {
         void SetListener(Vector3 position, Vector3 forward, Vector3 up, Vector3 velocity);
         void UpdateSourcePosition(IAudioSource source, Vector3 position, Vector3 velocity);
+        void Dispose();
     }
 
     // [SPATIALISATION D.7] Reverb Interface
@@ -2338,8 +2351,8 @@ namespace Engine.Audio
     internal class LimiterDSP : IAudioDSP { public string Name => "Limiter"; public void Process(float[] samples, int channels, int sampleRate) { /* Placeholder */ } public void SetParameter(string paramName, object value) { } public object GetParameter(string paramName) => null; }
     internal class DelayDSP : IAudioDSP { public string Name => "Delay"; public void Process(float[] samples, int channels, int sampleRate) { /* Placeholder */ } public void SetParameter(string paramName, object value) { } public object GetParameter(string paramName) => null; }
     internal class ReverbDSP : IAudioReverb { public string Name => "Reverb"; public void Process(float[] samples, int channels, int sampleRate) { /* Placeholder */ } public void SetParameter(string paramName, object value) { } public object GetParameter(string paramName) => null; public void ApplyReverbPreset(ReverbPreset preset) { /* Placeholder */ } }
-    internal class DefaultSpatializer : IAudioSpatializer { public string Name => "DefaultSpatializer"; public void Process(float[] samples, int channels, int sampleRate) { /* Placeholder */ } public void SetParameter(string paramName, object value) { } public object GetParameter(string paramName) => null; public void SetListener(Vector3 position, Vector3 forward, Vector3 up, Vector3 velocity) { /* Placeholder */ } public void UpdateSourcePosition(IAudioSource source, Vector3 position, Vector3 velocity) { /* Placeholder */ } }
-    internal class HRTFSpatializer : IAudioSpatializer { public string Name => "HRTFSpatializer"; public void Process(float[] samples, int channels, int sampleRate) { /* Placeholder */ } public void SetParameter(string paramName, object value) { } public object GetParameter(string paramName) => null; public void SetListener(Vector3 position, Vector3 forward, Vector3 up, Vector3 velocity) { /* Placeholder */ } public void UpdateSourcePosition(IAudioSource source, Vector3 position, Vector3 velocity) { /* Placeholder */ } }
+    internal class DefaultSpatializer : IAudioSpatializer { public string Name => "DefaultSpatializer"; public void Process(float[] samples, int channels, int sampleRate) { /* Placeholder */ } public void SetParameter(string paramName, object value) { } public object GetParameter(string paramName) => null; public void SetListener(Vector3 position, Vector3 forward, Vector3 up, Vector3 velocity) { /* Placeholder */ } public void UpdateSourcePosition(IAudioSource source, Vector3 position, Vector3 velocity) { /* Placeholder */ } public void Dispose() { } }
+    internal class HRTFSpatializer : IAudioSpatializer { public string Name => "HRTFSpatializer"; public void Process(float[] samples, int channels, int sampleRate) { /* Placeholder */ } public void SetParameter(string paramName, object value) { } public object GetParameter(string paramName) => null; public void SetListener(Vector3 position, Vector3 forward, Vector3 up, Vector3 velocity) { /* Placeholder */ } public void UpdateSourcePosition(IAudioSource source, Vector3 position, Vector3 velocity) { /* Placeholder */ } public void Dispose() { } }
     #endregion
 #endregion
 }

@@ -561,6 +561,9 @@ public class EntityManager
 
     public void SetComponent<T>(Entity entity, T component) where T : IComponent { }
 
+    public bool HasComponent<T>(Entity entity) where T : IComponent
+        => _entities.TryGetValue(entity.Id, out var c) && c.OfType<T>().Any();
+
     public void ForEach<T1, T2>(RefAction<T1, T2> action) where T1 : struct, IComponent where T2 : struct, IComponent { }
 
     public void AddComponent<T>(Entity entity, T component) where T : IComponent

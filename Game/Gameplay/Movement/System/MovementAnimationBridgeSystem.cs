@@ -65,6 +65,10 @@ namespace Game.Gameplay.Movement
             float GetLastDuration(Type systemType, string operation = "Total");
             float GetModuleAverageTimeMs();
             int GetErrorCount(IMovementLogger logger);
+
+            /// <summary>Statistiques par systeme. Le site d'appel rend
+            /// `?? new Dictionary&lt;Type, float&gt;()`, ce qui fixe le type.</summary>
+            System.Collections.Generic.Dictionary<Type, float> GetStats();
         }
 
         // MathHelper : huit appels dans ce fichier, aucune declaration. Les trois

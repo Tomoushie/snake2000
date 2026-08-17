@@ -81,6 +81,14 @@ namespace Snake2000.Engine.AI
         {
             _entityManager = em;
         }
+
+        // Quatre membres reclames par AIEngine. ShouldUpdate recoit un Type — le
+        // site d'appel ecrit `ShouldUpdate(sys.GetType())` — et repond si le
+        // systeme doit tourner sur cette frame.
+        public void Initialize() { }
+        public void Update(float deltaTime) { }
+        public void Shutdown() { }
+        public bool ShouldUpdate(Type systemType) => true;
     }
 
     public class AIParallelJobHandle

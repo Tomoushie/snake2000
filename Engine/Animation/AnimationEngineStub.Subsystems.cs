@@ -112,15 +112,21 @@ namespace Engine.Animation
     public class TelemetryCollector
     {
         public void RecordEvent(TelemetryEvent telemetryEvent) { }
+        public void Flush() { }
         public int GetEventCount() => 0;
     }
 
     // Aucun membre : le releve d usage montre des types instancies, enregistres et recuperes, jamais interroges.
-    public class AnimationBlendTreeSystem { }
-    public class AnimationCompressionSystem { }
-    public class AnimationInverseKinematicsSystem { }
-    public class AnimationProceduralSystem { }
-    public class AnimationStateMachineSystem { }
+    // Update(float) : SubsystemLifecycleManager les pilote par la boucle de frame.
+    public class AnimationBlendTreeSystem { public void Update(float deltaTime) { } }
+    // Update(float) : SubsystemLifecycleManager les pilote par la boucle de frame.
+    public class AnimationCompressionSystem { public void Update(float deltaTime) { } }
+    // Update(float) : SubsystemLifecycleManager les pilote par la boucle de frame.
+    public class AnimationInverseKinematicsSystem { public void Update(float deltaTime) { } }
+    // Update(float) : SubsystemLifecycleManager les pilote par la boucle de frame.
+    public class AnimationProceduralSystem { public void Update(float deltaTime) { } }
+    // Update(float) : SubsystemLifecycleManager les pilote par la boucle de frame.
+    public class AnimationStateMachineSystem { public void Update(float deltaTime) { } }
     // Le seul des treize types « sans membre » a qui un site d'appel en reclame :
     // dix proprietes lues, et un constructeur a treize parametres releve sur les
     // deux `new SubsystemDescriptor(...)` d'Index.cs, lignes 189 et 453.
